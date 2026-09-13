@@ -1,0 +1,28 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Secrets and environment variables
+.env
+.env.local
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# OS metadata
+.DS_Store
+Thumbs.db

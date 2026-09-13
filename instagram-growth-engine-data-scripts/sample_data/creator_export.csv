@@ -1,0 +1,6 @@
+id,type,timestamp,like_count,comments,caption
+p1,Reel,2026-08-01T18:00:00Z,220,15,"Learn AI the right way #AI #Education"
+p2,Image,2026-08-03T12:00:00Z,90,4,"Behind the scenes"
+p3,carousel,2026-08-05T19:30:00Z,180,20,"5 mistakes beginners make"
+p1,Reel,2026-08-01T18:00:00Z,220,15,"Learn AI the right way #AI #Education"
+p4,Reel,not-a-date,150,10,"Quick AI tip"
