@@ -45,8 +45,8 @@
 
     /* Top Nav */
     header {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
@@ -56,6 +56,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+      flex-wrap: wrap;
     }
 
     .brand {
@@ -67,17 +68,17 @@
       letter-spacing: -0.02em;
     }
     .brand-icon {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       background: linear-gradient(135deg, #ec4899, #8b5cf6, #38bdf8);
       border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 17px;
       color: white;
-      box-shadow: 0 0 15px rgba(236, 72, 153, 0.35);
+      box-shadow: 0 0 16px rgba(236, 72, 153, 0.4);
     }
     .brand-tag {
       font-size: 11px;
@@ -95,23 +96,24 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .creator-picker {
+    .creator-selector-box {
       display: flex;
       align-items: center;
       gap: 8px;
       background: var(--bg-dark);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border-bright);
       border-radius: 8px;
-      padding: 6px 12px;
+      padding: 5px 10px;
     }
-    .creator-picker label {
+    .creator-selector-box label {
       font-size: 12px;
       color: var(--text-muted);
       font-weight: 600;
     }
-    .creator-picker input {
+    .creator-select {
       background: transparent;
       border: none;
       outline: none;
@@ -119,7 +121,21 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       font-weight: 600;
-      width: 130px;
+      cursor: pointer;
+    }
+    .creator-select option {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+    .custom-cid-input {
+      background: #1e293b;
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: #f8fafc;
+      font-size: 12px;
+      display: none;
+      width: 140px;
     }
 
     .btn {
@@ -164,7 +180,7 @@
       border-color: #991b1b;
     }
     .btn-danger:hover { background: #991b1b; }
-    .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+    .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
 
     .status-dot {
       width: 8px;
@@ -190,6 +206,22 @@
       padding: 24px;
       flex: 1;
     }
+
+    /* Notification Banner */
+    .banner {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.3s;
+      gap: 12px;
+    }
+    .banner-info { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #bae6fd; }
+    .banner-success { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #a7f3d0; }
+    .banner-warning { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fde68a; }
 
     /* Metrics Strip */
     .metrics-strip {
@@ -345,7 +377,7 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-bright);
       border-radius: 10px;
-      padding: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -418,23 +450,37 @@
       color: var(--text-muted);
       margin: 6px 0;
     }
-    .approval-details {
+    .draft-preview-box {
       background: var(--bg-dark);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px;
-      margin-top: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .draft-hook {
+      color: var(--accent-pink);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .draft-body-text {
       color: #cbd5e1;
-      max-height: 220px;
-      overflow-y: auto;
+      font-size: 13px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .draft-tags {
+      color: var(--accent);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
     }
     .approval-actions {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-width: 140px;
     }
 
     /* Trend Sniffer */
@@ -530,25 +576,11 @@
     }
     .data-textarea:focus { border-color: var(--accent); }
 
-    /* Alert / Banner */
-    .banner {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      animation: fadeIn 0.3s;
-    }
-    .banner-info { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #bae6fd; }
-    .banner-success { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #a7f3d0; }
-
     /* Modal / Drawer */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       z-index: 100;
       display: none;
@@ -562,7 +594,7 @@
       border: 1px solid var(--border-bright);
       border-radius: 14px;
       width: 100%;
-      max-width: 820px;
+      max-width: 840px;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
@@ -584,8 +616,9 @@
 
     /* Loading Spinner */
     .spinner {
-      width: 16px;
-      height: 16px;
+      display: inline-block;
+      width: 14px;
+      height: 14px;
       border: 2px solid rgba(255,255,255,0.3);
       border-radius: 50%;
       border-top-color: white;
@@ -603,6 +636,7 @@
       justify-content: space-between;
       align-items: center;
       background: var(--bg-card);
+      margin-top: auto;
     }
   </style>
 </head>
@@ -619,16 +653,20 @@
     <div class="header-controls">
       <div class="status-indicator">
         <div id="statusDot" class="status-dot"></div>
-        <span id="statusText">Connecting...</span>
+        <span id="statusText">Checking...</span>
       </div>
 
-      <div class="creator-picker">
-        <label for="creatorIdInput">Creator:</label>
-        <input type="text" id="creatorIdInput" value="creator_onboarding_demo" placeholder="creator_id" />
-        <button class="btn btn-secondary btn-sm" onclick="reloadAllDashboardData()">Switch</button>
+      <!-- Dynamic Creator Selector -->
+      <div class="creator-selector-box">
+        <label for="creatorSelect">Active Creator:</label>
+        <select id="creatorSelect" class="creator-select" onchange="onCreatorSelectChanged(this.value)">
+          <option value="creator_sarthak">creator_sarthak (Active Demo)</option>
+        </select>
+        <input type="text" id="customCidInput" class="custom-cid-input" placeholder="Enter creator ID" onkeydown="if(event.key==='Enter') applyCustomCreator()" />
+        <button id="customCidBtn" class="btn btn-secondary btn-sm" style="display:none;" onclick="applyCustomCreator()">Go</button>
       </div>
 
-      <button class="btn btn-primary" onclick="triggerFullOrchestrator()">
+      <button id="runCycleBtn" class="btn btn-primary" onclick="triggerFullOrchestrator()">
         <span>🚀 Run Autonomous Cycle</span>
       </button>
 
@@ -644,7 +682,15 @@
     <!-- Notification Banner -->
     <div id="alertBanner" class="banner banner-info" style="display:none;">
       <span id="alertMsg">System ready.</span>
-      <button class="btn btn-sm btn-secondary" onclick="document.getElementById('alertBanner').style.display='none'">Dismiss</button>
+      <button class="btn btn-sm btn-secondary" onclick="document.getElementById('alertBanner').style.display='none'">✕</button>
+    </div>
+
+    <!-- Empty State Guide (Shown only when selected creator has no posts) -->
+    <div id="emptyCreatorGuide" class="banner banner-warning" style="display:none;">
+      <div>
+        <strong>👋 Welcome!</strong> This creator has 0 historical post records in the database.
+        Click <strong style="cursor:pointer; text-decoration:underline;" onclick="switchTab('onboarding', document.querySelectorAll('.tab-btn')[4])">📥 Ingest & Onboard</strong> to load data, or switch to <strong>creator_sarthak</strong> in the top bar to view active metrics.
+      </div>
     </div>
 
     <!-- Metrics Strip -->
@@ -672,7 +718,7 @@
 
       <div class="metric-card">
         <div class="metric-label">Algorithmic Sweet Spot</div>
-        <div class="metric-val" id="metricWindow" style="font-size: 16px; margin-top: 10px;">--</div>
+        <div class="metric-val" id="metricWindow" style="font-size: 15px; margin-top: 10px;">--</div>
         <div class="metric-sub">Peak audience active window</div>
       </div>
 
@@ -709,9 +755,9 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">What to Post This Week (Actionable 7-Day Plan)</div>
-            <div class="panel-desc">Data-backed content blueprint tailored to creator retention pillars and format allocation.</div>
+            <div class="panel-desc">Autonomous content schedule formulated from your highest-converting formats, retention pillars, and peak windows.</div>
           </div>
-          <button class="btn btn-secondary" onclick="generateNewContentPlan()">⚡ Re-plan Week</button>
+          <button id="replanBtn" class="btn btn-secondary" onclick="generateNewContentPlan()">⚡ Re-plan Week</button>
         </div>
         <div id="planGrid" class="plan-grid">
           <div style="color: var(--text-muted); padding: 20px;">Loading content schedule...</div>
@@ -725,7 +771,7 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">Human-in-the-Loop Review Queue</div>
-            <div class="panel-desc">Every AI-generated post draft, experimental angle, or strategy pivot requires your explicit blessing.</div>
+            <div class="panel-desc">Every AI-generated post draft, experimental angle, or strategy pivot requires your explicit review.</div>
           </div>
           <button class="btn btn-secondary" onclick="loadApprovalQueue()">🔄 Refresh Queue</button>
         </div>
@@ -746,7 +792,7 @@
         </div>
 
         <div class="trend-radar-controls">
-          <select id="trendNicheSelect" class="select-input">
+          <select id="trendNicheSelect" class="select-input" onchange="sniffTrends()">
             <option value="Tech & AI">Tech & AI</option>
             <option value="Fitness & Wellness">Fitness & Wellness</option>
             <option value="Personal Finance">Personal Finance</option>
@@ -760,7 +806,7 @@
         </div>
 
         <div id="trendGrid" class="trend-grid">
-          <div style="color: var(--text-muted); padding: 20px;">Select a niche and click "Sniff Live Trends" to scan active signals.</div>
+          <div style="color: var(--text-muted); padding: 20px;">Scanning active trend radar...</div>
         </div>
       </div>
     </div>
@@ -786,28 +832,42 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Single-Session Creator Onboarding</div>
-            <div class="panel-desc">Import past Instagram metrics via JSON or clipboard copy to automatically ingest, generate strategic allocations, and construct the first week's plan.</div>
+            <div class="panel-title">Zero-API Data Ingestion & Onboarding</div>
+            <div class="panel-desc">Upload a CSV file or paste spreadsheet metrics to automatically normalize columns, generate strategic allocations, and build your content blueprint.</div>
           </div>
         </div>
 
         <div class="ingest-box">
-          <div style="display:flex; gap:12px; align-items:center;">
-            <label style="font-size:13px; font-weight:600;">Creator Niche:</label>
-            <select id="onboardNiche" class="select-input">
-              <option value="Tech & AI">Tech & AI</option>
-              <option value="Fitness & Wellness">Fitness & Wellness</option>
-              <option value="Personal Finance">Personal Finance</option>
-              <option value="Creator Economy">Creator Economy</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" onclick="loadSampleDataIntoTextarea()">📋 Load Sample Data</button>
+          <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+            <div>
+              <label style="font-size:12px; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">Target Creator ID:</label>
+              <input type="text" id="onboardCidInput" class="text-input" style="width:180px;" value="creator_sarthak" />
+            </div>
+
+            <div>
+              <label style="font-size:12px; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">Niche:</label>
+              <select id="onboardNiche" class="select-input">
+                <option value="Tech & AI">Tech & AI</option>
+                <option value="Fitness & Wellness">Fitness & Wellness</option>
+                <option value="Personal Finance">Personal Finance</option>
+                <option value="Creator Economy">Creator Economy</option>
+              </select>
+            </div>
+
+            <div style="margin-top: 18px;">
+              <button class="btn btn-secondary btn-sm" onclick="loadSampleDataIntoTextarea()">📋 Load Sample Data</button>
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+                📁 Upload CSV/JSON
+                <input type="file" id="csvFileInput" accept=".csv,.tsv,.json" style="display:none;" onchange="handleFileUpload(event)">
+              </label>
+            </div>
           </div>
 
           <textarea id="onboardDataInput" class="data-textarea" placeholder="Paste array of JSON post records or CSV rows here..."></textarea>
 
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:12px; color:var(--text-subtle);">Offline-first smart mapper automatically normalizes column aliases.</span>
-            <button class="btn btn-primary" onclick="submitOnboardingPipeline()">🚀 Ingest & Complete Onboarding</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <span style="font-size:12px; color:var(--text-subtle);">Offline-first smart mapper automatically detects 40+ column variations (Likes, Impressions, Reach, etc.).</span>
+            <button id="submitOnboardBtn" class="btn btn-primary" onclick="submitOnboardingPipeline()">🚀 Ingest & Complete Onboarding</button>
           </div>
         </div>
       </div>
@@ -821,7 +881,7 @@
       <div class="modal-header">
         <h3 style="font-size:18px; font-weight:700;">Executive Weekly Briefing</h3>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-sm btn-secondary" onclick="openPrintableReport()">🖨️ Printable View</button>
+          <button class="btn btn-sm btn-secondary" onclick="openPrintableReport()">🖨️ Open Full Printable View</button>
           <button class="btn btn-sm btn-secondary" onclick="closeModal('reportModal')">✕ Close</button>
         </div>
       </div>
@@ -876,7 +936,33 @@
     const API_BASE = window.location.origin;
 
     function getCreatorId() {
-      return document.getElementById('creatorIdInput').value.trim() || 'test_creator_123';
+      const select = document.getElementById('creatorSelect');
+      if (select.value === '__custom__') {
+        return document.getElementById('customCidInput').value.trim() || 'creator_sarthak';
+      }
+      return select.value || 'creator_sarthak';
+    }
+
+    function onCreatorSelectChanged(val) {
+      const customInput = document.getElementById('customCidInput');
+      const customBtn = document.getElementById('customCidBtn');
+      if (val === '__custom__') {
+        customInput.style.display = 'inline-block';
+        customBtn.style.display = 'inline-block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        customBtn.style.display = 'none';
+        document.getElementById('onboardCidInput').value = val;
+        reloadAllDashboardData();
+      }
+    }
+
+    function applyCustomCreator() {
+      const val = document.getElementById('customCidInput').value.trim();
+      if (!val) return;
+      document.getElementById('onboardCidInput').value = val;
+      reloadAllDashboardData();
     }
 
     function showAlert(msg, isSuccess = true) {
@@ -885,7 +971,7 @@
       banner.className = 'banner ' + (isSuccess ? 'banner-success' : 'banner-info');
       msgEl.innerText = msg;
       banner.style.display = 'flex';
-      setTimeout(() => { banner.style.display = 'none'; }, 6000);
+      setTimeout(() => { banner.style.display = 'none'; }, 7000);
     }
 
     function switchTab(tabName, el) {
@@ -898,10 +984,36 @@
       if (tabName === 'approvals') loadApprovalQueue();
       if (tabName === 'experiments') loadExperiments();
       if (tabName === 'plan') loadLatestContentPlan();
+      if (tabName === 'trends') sniffTrends();
     }
 
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
+    }
+
+    // Load available creators from DB
+    async function loadCreatorsList() {
+      try {
+        const res = await fetch(`${API_BASE}/creators`);
+        if (!res.ok) return;
+        const creators = await res.json();
+        const select = document.getElementById('creatorSelect');
+
+        if (creators && creators.length > 0) {
+          select.innerHTML = creators.map(c => `
+            <option value="${c.id}">${c.id} (${c.total_posts} posts${c.niche ? ' &bull; ' + c.niche : ''})</option>
+          `).join('') + '<option value="__custom__">+ Enter Custom Creator ID...</option>';
+
+          // Select first creator that has posts, or first item
+          const hasPosts = creators.find(c => c.total_posts > 0);
+          if (hasPosts) {
+            select.value = hasPosts.id;
+            document.getElementById('onboardCidInput').value = hasPosts.id;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load creators list', e);
+      }
     }
 
     // Healthcheck
@@ -928,12 +1040,29 @@
     // Dashboard Overview Metrics
     async function loadOverviewMetrics() {
       const cid = getCreatorId();
+      const guide = document.getElementById('emptyCreatorGuide');
+
       try {
         const res = await fetch(`${API_BASE}/analytics/performance/${cid}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          document.getElementById('metricER').innerText = '0.00%';
+          document.getElementById('metricReach').innerText = '0';
+          document.getElementById('metricTopFormat').innerText = '--';
+          document.getElementById('metricWindow').innerText = 'No posts yet';
+          guide.style.display = 'flex';
+          return;
+        }
+
         const data = await res.json();
         const m = data.metrics || {};
         const t = data.trends || {};
+        const totalPosts = data.total_posts_analyzed || 0;
+
+        if (totalPosts === 0) {
+          guide.style.display = 'flex';
+        } else {
+          guide.style.display = 'none';
+        }
 
         document.getElementById('metricER').innerText = (m.average_engagement_rate || 0).toFixed(2) + '%';
         document.getElementById('metricReach').innerText = (m.total_reach || 0).toLocaleString();
@@ -962,14 +1091,21 @@
     async function loadLatestContentPlan() {
       const cid = getCreatorId();
       const grid = document.getElementById('planGrid');
-      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Loading schedule...</div>';
+      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Loading schedule...</div>';
 
       try {
         const res = await fetch(`${API_BASE}/content/plans/${cid}`);
         if (!res.ok) {
-          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No plan found. Click "Run Autonomous Cycle" or "Re-plan Week" to generate one.</div>';
+          grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align:center; padding:36px; color:var(--text-muted);">
+              <div style="font-size:32px; margin-bottom:8px;">📅</div>
+              <div style="font-size:16px; font-weight:700; color:var(--text-main);">No Content Plan Found</div>
+              <div style="font-size:13px; margin:6px 0 16px 0;">Click "⚡ Re-plan Week" or "🚀 Run Autonomous Cycle" to generate your 7-day schedule.</div>
+              <button class="btn btn-primary btn-sm" onclick="generateNewContentPlan()">⚡ Generate 7-Day Plan</button>
+            </div>`;
           return;
         }
+
         const data = await res.json();
         const items = data.scheduled_items || [];
         if (items.length === 0) {
@@ -993,7 +1129,7 @@
           </div>
         `).join('');
       } catch (err) {
-        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load plan.</div>';
+        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load plan. Check connection.</div>';
       }
     }
 
@@ -1001,12 +1137,12 @@
     async function loadApprovalQueue() {
       const cid = getCreatorId();
       const list = document.getElementById('approvalList');
-      list.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Checking pending approvals...</div>';
+      list.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Checking review queue...</div>';
 
       try {
         const res = await fetch(`${API_BASE}/approvals?creator_id=${cid}`);
         const items = await res.json();
-        const pending = items.filter(i => i.status === 'pending');
+        const pending = (items || []).filter(i => i.status === 'pending');
 
         document.getElementById('metricPendingApprovals').innerText = pending.length;
         document.getElementById('approvalTabCount').innerText = pending.length;
@@ -1021,23 +1157,34 @@
           return;
         }
 
-        list.innerHTML = pending.map(item => `
-          <div class="approval-card" id="appr-${item.approval_id}">
-            <div class="approval-body">
-              <h4>
-                <span class="badge ${item.item_type === 'content_draft' ? 'badge-blue' : 'badge-purple'}">${item.item_type.replace('_', ' ')}</span>
-                ${item.item_type === 'content_draft' ? 'Post Draft Ready for Approval' : 'Strategy Pivot Approval'}
-              </h4>
-              <div class="approval-meta">ID: <code style="color:var(--accent);">${item.item_id.substring(0, 8)}...</code> &bull; Priority: <strong>${item.priority}</strong> &bull; Reason: ${item.reason}</div>
-              <div class="approval-details">${JSON.stringify(item.payload, null, 2)}</div>
+        list.innerHTML = pending.map(item => {
+          const p = item.payload || {};
+          return `
+            <div class="approval-card" id="appr-${item.approval_id}">
+              <div class="approval-body">
+                <h4>
+                  <span class="badge ${item.item_type === 'content_draft' ? 'badge-blue' : 'badge-purple'}">${item.item_type.replace('_', ' ')}</span>
+                  ${p.title ? p.title : (item.item_type === 'content_draft' ? 'Content Draft Ready for Review' : 'Strategy Pivot Approval')}
+                </h4>
+                <div class="approval-meta">ID: <code style="color:var(--accent);">${item.item_id.substring(0, 8)}...</code> &bull; Priority: <strong>${item.priority}</strong> &bull; Reason: ${item.reason}</div>
+                
+                ${item.item_type === 'content_draft' ? `
+                  <div class="draft-preview-box">
+                    ${p.hook ? `<div class="draft-hook">Hook: "${p.hook}"</div>` : ''}
+                    <div class="draft-body-text">${p.body || ''}</div>
+                    ${p.call_to_action ? `<div style="font-size:12px; color:var(--text-muted);"><strong>CTA:</strong> ${p.call_to_action}</div>` : ''}
+                    ${p.hashtags && p.hashtags.length ? `<div class="draft-tags">${p.hashtags.map(t => '#' + t).join(' ')}</div>` : ''}
+                  </div>
+                ` : `<pre class="draft-preview-box" style="font-family:'JetBrains Mono',monospace; font-size:11px;">${JSON.stringify(p, null, 2)}</pre>`}
+              </div>
+              <div class="approval-actions">
+                <button class="btn btn-success btn-sm" onclick="decideApproval('${item.approval_id}', 'approved')">✓ Approve</button>
+                <button class="btn btn-secondary btn-sm" onclick="decideApproval('${item.approval_id}', 'revision_requested')">✏ Request Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="decideApproval('${item.approval_id}', 'rejected')">✕ Reject</button>
+              </div>
             </div>
-            <div class="approval-actions">
-              <button class="btn btn-success btn-sm" onclick="decideApproval('${item.approval_id}', 'approved')">✓ Approve</button>
-              <button class="btn btn-secondary btn-sm" onclick="decideApproval('${item.approval_id}', 'revision_requested')">✏ Request Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="decideApproval('${item.approval_id}', 'rejected')">✕ Reject</button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } catch (err) {
         list.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load approvals.</div>';
       }
@@ -1106,7 +1253,7 @@
     async function loadExperiments() {
       const cid = getCreatorId();
       const grid = document.getElementById('expGrid');
-      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Loading experiments...</div>';
+      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Loading experiments...</div>';
 
       try {
         const res = await fetch(`${API_BASE}/experiments?creator_id=${cid}`);
@@ -1188,17 +1335,17 @@
       const modal = document.getElementById('reportModal');
       const body = document.getElementById('reportBody');
       modal.classList.add('active');
-      body.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Compiling executive briefing...</div>';
+      body.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Compiling executive briefing...</div>';
 
       try {
         const res = await fetch(`${API_BASE}/reports/weekly/${cid}`);
         if (!res.ok) {
-          body.innerHTML = '<div style="color:var(--danger); padding:20px;">Could not generate report. Ingest data first.</div>';
+          body.innerHTML = '<div style="color:var(--danger); padding:20px;">Could not generate report. Ingest post data first.</div>';
           return;
         }
         const data = await res.json();
         body.innerHTML = `
-          <div style="font-family:'Plus Jakarta Sans',sans-serif;">
+          <div>
             <div style="background:var(--bg-surface); padding:16px; border-radius:8px; margin-bottom:16px;">
               <h3 style="color:var(--accent); font-size:18px; margin-bottom:4px;">Executive Briefing for ${cid}</h3>
               <div style="font-size:12px; color:var(--text-muted);">Generated: ${new Date().toLocaleDateString()} &bull; Niche: ${data.niche}</div>
@@ -1219,22 +1366,34 @@
     // Single-Session Onboarding
     function loadSampleDataIntoTextarea() {
       const sample = [
-        { "post_id": "p101", "content_type": "reel", "likes_count": 480, "comments_count": 34, "shares_count": 89, "saves_count": 112, "reach": 4200, "impressions": 5800, "timestamp": "2026-10-18T18:30:00Z" },
-        { "post_id": "p102", "content_type": "carousel", "likes_count": 310, "comments_count": 22, "shares_count": 45, "saves_count": 78, "reach": 2900, "impressions": 3800, "timestamp": "2026-10-19T19:00:00Z" },
-        { "post_id": "p103", "content_type": "reel", "likes_count": 650, "comments_count": 49, "shares_count": 140, "saves_count": 190, "reach": 6100, "impressions": 8200, "timestamp": "2026-10-20T20:15:00Z" },
-        { "post_id": "p104", "content_type": "image", "likes_count": 140, "comments_count": 11, "shares_count": 8, "saves_count": 14, "reach": 1500, "impressions": 1900, "timestamp": "2026-10-21T18:00:00Z" },
-        { "post_id": "p105", "content_type": "reel", "likes_count": 890, "comments_count": 72, "shares_count": 210, "saves_count": 260, "reach": 8900, "impressions": 11400, "timestamp": "2026-10-22T19:30:00Z" }
+        { "post_id": "p201", "content_type": "reel", "likes_count": 520, "comments_count": 42, "shares_count": 110, "saves_count": 135, "reach": 5400, "impressions": 7100, "timestamp": "2026-10-18T18:30:00Z" },
+        { "post_id": "p202", "content_type": "carousel", "likes_count": 340, "comments_count": 28, "shares_count": 55, "saves_count": 92, "reach": 3300, "impressions": 4400, "timestamp": "2026-10-19T19:00:00Z" },
+        { "post_id": "p203", "content_type": "reel", "likes_count": 780, "comments_count": 64, "shares_count": 180, "saves_count": 230, "reach": 7900, "impressions": 10500, "timestamp": "2026-10-20T20:15:00Z" },
+        { "post_id": "p204", "content_type": "image", "likes_count": 160, "comments_count": 14, "shares_count": 10, "saves_count": 18, "reach": 1800, "impressions": 2200, "timestamp": "2026-10-21T18:00:00Z" },
+        { "post_id": "p205", "content_type": "reel", "likes_count": 980, "comments_count": 86, "shares_count": 250, "saves_count": 310, "reach": 9800, "impressions": 12800, "timestamp": "2026-10-22T19:30:00Z" }
       ];
       document.getElementById('onboardDataInput').value = JSON.stringify(sample, null, 2);
     }
 
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('onboardDataInput').value = evt.target.result;
+        showAlert(`Loaded ${file.name} (${file.size} bytes). Click "Ingest & Complete Onboarding" to process.`);
+      };
+      reader.readAsText(file);
+    }
+
     async function submitOnboardingPipeline() {
-      const cid = getCreatorId();
+      const cid = document.getElementById('onboardCidInput').value.trim() || getCreatorId();
       const niche = document.getElementById('onboardNiche').value;
       const rawText = document.getElementById('onboardDataInput').value.trim();
+      const btn = document.getElementById('submitOnboardBtn');
 
       if (!rawText) {
-        alert('Please provide historical data or click "Load Sample Data".');
+        alert('Please provide data or click "Load Sample Data" or "Upload CSV".');
         return;
       }
 
@@ -1242,10 +1401,24 @@
       try {
         parsedData = JSON.parse(rawText);
       } catch (e) {
-        alert('Data must be a valid JSON array of post records.');
-        return;
+        // If not JSON, parse CSV lines
+        const lines = rawText.split('\n').filter(l => l.trim().length > 0);
+        if (lines.length < 2) {
+          alert('CSV must contain a header row and at least one data row.');
+          return;
+        }
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+        parsedData = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+          const row = {};
+          headers.forEach((h, idx) => { row[h] = cols[idx] !== undefined ? cols[idx] : null; });
+          parsedData.push(row);
+        }
       }
 
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Processing...';
       showAlert('Processing single-session onboarding pipeline...');
 
       try {
@@ -1256,56 +1429,77 @@
         });
         const data = await res.json();
         if (res.ok) {
-          showAlert(`Onboarding complete! ${data.posts_ingested} posts ingested, strategy and 7-day schedule generated.`);
+          showAlert(`Onboarding complete! ${data.posts_ingested} posts ingested. Strategy and 7-day schedule generated!`);
+          await loadCreatorsList();
+          document.getElementById('creatorSelect').value = cid;
           reloadAllDashboardData();
           switchTab('plan', document.querySelectorAll('.tab-btn')[0]);
         } else {
-          showAlert('Onboarding failed: ' + (data.detail || 'Unknown error'), false);
+          showAlert('Onboarding error: ' + (data.detail || 'Unknown error'), false);
         }
       } catch (err) {
         showAlert('Network error during onboarding.', false);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Ingest & Complete Onboarding';
       }
     }
 
     // Run Full Autonomous Orchestrator Cycle
     async function triggerFullOrchestrator() {
       const cid = getCreatorId();
+      const btn = document.getElementById('runCycleBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Running Cycle...';
       showAlert('Triggering autonomous orchestrator cycle...');
+
       try {
         const res = await fetch(`${API_BASE}/creator-plan`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ creator_id: cid, trigger: 'manual_dashboard_cycle' })
+          body: JSON.stringify({ creator_id: cid, trigger_event: 'manual' })
         });
         const data = await res.json();
         if (res.ok) {
-          showAlert(`Autonomous cycle completed! Decision: ${data.decision.decision_type || 'Success'}`);
+          const act = (data.decision && data.decision.action) || 'completed';
+          showAlert(`Autonomous cycle completed! Decision: ${act}. Refreshed schedule and metrics.`);
           reloadAllDashboardData();
         } else {
-          showAlert('Failed to run cycle.', false);
+          showAlert('Failed to run cycle: ' + (data.detail || 'Unknown error'), false);
         }
       } catch (err) {
         showAlert('Network error running orchestrator.', false);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀 Run Autonomous Cycle</span>';
       }
     }
 
+    // Generate New Content Plan
     async function generateNewContentPlan() {
       const cid = getCreatorId();
-      showAlert('Generating fresh 7-day content schedule...');
+      const btn = document.getElementById('replanBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Re-planning...';
+      showAlert('Formulating fresh 7-day schedule...');
+
       try {
-        const res = await fetch(`${API_BASE}/content/plans/generate`, {
+        const res = await fetch(`${API_BASE}/content/plan`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ creator_id: cid, days: 7 })
+          body: JSON.stringify({ creator_id: cid, week_number: 1 })
         });
         if (res.ok) {
-          showAlert('New 7-day schedule active!');
+          showAlert('New 7-day content schedule active!');
           loadLatestContentPlan();
         } else {
-          showAlert('Failed to generate schedule.', false);
+          showAlert('Could not generate plan. Ensure posts exist for this creator.', false);
         }
       } catch (err) {
         showAlert('Network error generating schedule.', false);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Re-plan Week';
       }
     }
 
@@ -1316,8 +1510,9 @@
     }
 
     // Startup
-    window.addEventListener('DOMContentLoaded', () => {
-      checkHealth();
+    window.addEventListener('DOMContentLoaded', async () => {
+      await checkHealth();
+      await loadCreatorsList();
       reloadAllDashboardData();
       setInterval(checkHealth, 30000);
     });

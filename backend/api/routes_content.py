@@ -231,6 +231,69 @@ def create_content_plan(
     return plan_res
 
 
+@router.post("/content/plans/generate")
+def generate_content_plan_alias(
+    payload: GeneratePlanRequest,
+    db: Session = Depends(get_db),
+):
+    """Alias for POST /content/plan to generate a weekly plan."""
+    return create_content_plan(payload, db=db)
+
+
+@router.get("/content/plans/{creator_id}")
+@router.get("/content/plan/{creator_id}")
+def get_latest_content_plan(
+    creator_id: str,
+    db: Session = Depends(get_db),
+):
+    """Retrieves the latest 7-day content schedule for a creator, or auto-generates one if posts exist."""
+    creator = db.get(Creator, creator_id)
+    if not creator:
+        raise HTTPException(status_code=404, detail=f"Creator '{creator_id}' not found.")
+
+    plan = (
+        db.query(ContentPlan)
+        .filter_by(creator_id=creator_id)
+        .order_by(ContentPlan.created_at.desc())
+        .first()
+    )
+    if not plan:
+        # If creator has posts, generate a plan automatically
+        posts = db.query(Post).filter_by(creator_id=creator_id).all()
+        if posts:
+            strat = (
+                db.query(Strategy)
+                .filter_by(creator_id=creator_id)
+                .order_by(Strategy.created_at.desc())
+                .first()
+            )
+            strat_dict = {
+                "strategy_id": strat.id,
+                "primary_content_type": strat.primary_content_type,
+                "core_pillars": strat.core_pillars,
+            } if strat else {}
+
+            post_dicts = [{"timestamp": p.timestamp.isoformat() if p.timestamp else None, "likes_count": p.likes_count, "comments_count": p.comments_count, "reach": p.reach} for p in posts]
+            best_window = find_best_posting_window(post_dicts)
+
+            return run_content_planning_agent(
+                creator_id=creator_id,
+                strategy=strat_dict,
+                best_posting_window=best_window,
+                week_number=1,
+                db=db,
+            )
+        raise HTTPException(status_code=404, detail="No content plan found. Ingest posts or generate a plan.")
+
+    return {
+        "plan_id": plan.id,
+        "creator_id": plan.creator_id,
+        "week_number": plan.week_number,
+        "scheduled_items": plan.scheduled_items or [],
+        "created_at": plan.created_at.isoformat() if plan.created_at else None,
+    }
+
+
 @router.post("/content/generate", response_model=List[DraftResponse])
 def generate_content_drafts(
     payload: GenerateDraftsRequest,
