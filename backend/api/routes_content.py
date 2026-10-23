@@ -88,11 +88,17 @@ class DraftResponse(BaseModel):
     audio_suggestion: Optional[str] = None
     recommended_time: Optional[str] = None
     status: str
+    published_at: Optional[str] = None
+    published_post_id: Optional[str] = None
     created_at: Optional[str] = None
 
 
 class UpdateDraftStatusRequest(BaseModel):
     status: str = Field(..., description="approved | published | archived | draft")
+
+
+class MarkPublishedRequest(BaseModel):
+    published_post_id: str = Field(..., description="Instagram post ID or permalink URL")
 
 
 # ---------------------------------------------------------
@@ -277,6 +283,17 @@ def generate_content_drafts(
             use_llm=payload.use_llm,
             db=db,
         )
+        from backend.api.routes_approvals import enqueue_approval_item
+        enqueue_approval_item(
+            creator_id=payload.creator_id,
+            item_type="content_draft",
+            item_id=draft["draft_id"],
+            action_type="draft_approval",
+            summary=f"Draft ({draft['content_type'].upper()}): {draft['title']}",
+            payload_snapshot=draft,
+            risk_level="high",
+            db=db,
+        )
         created_drafts.append({
             "id": draft["draft_id"],
             "creator_id": draft["creator_id"],
@@ -393,5 +410,49 @@ def update_draft_status(
         "audio_suggestion": draft.audio_suggestion,
         "recommended_time": draft.recommended_time,
         "status": draft.status,
+        "published_at": draft.published_at.isoformat() if draft.published_at else None,
+        "published_post_id": draft.published_post_id,
         "created_at": draft.created_at.isoformat() if draft.created_at else None,
     }
+
+
+@router.post("/content/drafts/{draft_id}/mark-published", response_model=DraftResponse)
+def mark_draft_published(
+    draft_id: str,
+    payload: MarkPublishedRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Marks an approved draft as manually published by the creator.
+    Records the actual Instagram post ID or permalink URL and timestamps publication.
+    """
+    draft = db.get(ContentDraft, draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    from backend.database.models import utcnow
+    now = utcnow()
+    draft.status = "published"
+    draft.published_at = now
+    draft.published_post_id = payload.published_post_id.strip()
+    db.commit()
+
+    return {
+        "id": draft.id,
+        "creator_id": draft.creator_id,
+        "plan_id": draft.plan_id,
+        "content_type": draft.content_type,
+        "title": draft.title,
+        "hook": draft.hook,
+        "body": draft.body,
+        "call_to_action": draft.call_to_action,
+        "hashtags": draft.hashtags or [],
+        "visual_direction": draft.visual_direction,
+        "audio_suggestion": draft.audio_suggestion,
+        "recommended_time": draft.recommended_time,
+        "status": draft.status,
+        "published_at": draft.published_at.isoformat(),
+        "published_post_id": draft.published_post_id,
+        "created_at": draft.created_at.isoformat() if draft.created_at else None,
+    }
+

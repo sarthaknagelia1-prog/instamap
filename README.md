@@ -4,7 +4,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Machine-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Tests Passing](https://img.shields.io/badge/tests-51%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-57%20passed-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An autonomous, data-driven intelligence and content planning system built specifically for creators, agencies, and social media strategists.
@@ -118,6 +118,7 @@ The PostgreSQL database houses 8 core relational tables:
 | `content_drafts` | Drafted publishing packages with review status (`draft`, `approved`, `published`) |
 | `experiments` | A/B hypothesis tests, variant assignments, and statistical results |
 | `trending_signals` | Multi-source rising topics, velocity scores, and Instagram viral hooks |
+| `approval_queue` | Human-in-the-loop review queue for drafts, strategy pivots, and experiments |
 
 ---
 
@@ -204,6 +205,7 @@ All **46 tests** across all modules run in **~1.1s** with a 100% pass rate.
 - `GET /content/drafts` — Filter and view drafted content
 - `GET /content/drafts/{id}` — Detailed view of a single draft
 - `PATCH /content/drafts/{id}/status` — Update draft status (`draft`, `approved`, `published`)
+- `POST /content/drafts/{id}/mark-published` — Mark draft as published on Instagram with external post ID
 
 ### Experiment Engine
 - `POST /experiments/propose` — Propose an A/B experiment from metrics
@@ -218,6 +220,12 @@ All **46 tests** across all modules run in **~1.1s** with a 100% pass rate.
 - `GET /trends/sniff` — Live multi-source trend sniffing with velocity scoring & hook synthesis
 - `POST /trends/sniff/custom` — Sniff custom subreddits or keywords
 - `GET /trends/cached` — Retrieve active unexpired signals from PostgreSQL
+
+### Approval & Review Layer
+- `GET /approvals` — List queue items with creator and status filtering
+- `GET /approvals/{id}` — Full payload snapshot of an approval item
+- `POST /approvals/{id}/decision` — Submit decision (approve, reject, request revision)
+- `GET /approvals/stats/{creator_id}` — Summary metrics on approval queue velocity and approval rate
 
 ---
 

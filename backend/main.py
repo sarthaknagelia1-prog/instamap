@@ -19,6 +19,7 @@ from backend.api.routes_orchestrator import router as orchestrator_router
 from backend.api.routes_content import router as content_router
 from backend.api.routes_experiments import router as experiments_router
 from backend.api.routes_trends import router as trends_router
+from backend.api.routes_approvals import router as approvals_router
 
 
 @asynccontextmanager
@@ -52,6 +53,7 @@ app.include_router(orchestrator_router)
 app.include_router(content_router)
 app.include_router(experiments_router)
 app.include_router(trends_router)
+app.include_router(approvals_router)
 
 
 

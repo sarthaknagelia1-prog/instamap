@@ -9,6 +9,7 @@ from backend.api.routes_orchestrator import router as orchestrator_router
 from backend.api.routes_content import router as content_router
 from backend.api.routes_experiments import router as experiments_router
 from backend.api.routes_trends import router as trends_router
+from backend.api.routes_approvals import router as approvals_router
 
 __all__ = [
     "ingest_router",
@@ -18,4 +19,5 @@ __all__ = [
     "content_router",
     "experiments_router",
     "trends_router",
+    "approvals_router",
 ]

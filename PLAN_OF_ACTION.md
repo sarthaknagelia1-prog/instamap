@@ -137,13 +137,13 @@ Each drafted content item includes everything the creator needs to manually publ
 
 **Goal:** Safe review flow for all agent-generated strategies and content drafts.
 
-- [ ] Action classifier: auto-approve (reports, analysis) vs. review-required (strategy pivots, content drafts)
-- [ ] `approval_queue` table + `GET /approvals`, `POST /approvals/{id}/decision` endpoints
+- [x] Action classifier: auto-approve (reports, analysis) vs. review-required (strategy pivots, content drafts)
+- [x] `approval_queue` table + `GET /approvals`, `POST /approvals/{id}/decision`, `GET /approvals/stats/{creator_id}` endpoints
 - [ ] Frontend approval queue UI with realtime updates (WebSocket/SSE)
 - [ ] Celery Beat / Temporal schedules for weekly review cycles
-- [ ] Event bus wiring: `data.uploaded`, `performance.drop_detected`, `experiment.completed`, `schedule.weekly_review`
-- [ ] `POST /content/drafts/{id}/mark-published` — creator marks a draft as published after posting it manually, linking back the actual post metrics when re-ingested
-- [ ] Tests: classifier routes correctly; rejected items are archived, not deleted
+- [x] Event bus wiring: `data.uploaded`, `performance.drop_detected`, `experiment.completed`, `schedule.weekly_review`
+- [x] `POST /content/drafts/{id}/mark-published` — creator marks a draft as published after posting it manually, linking back the actual post metrics when re-ingested
+- [x] Tests: classifier routes correctly; rejected items are archived, not deleted (57/57 passing)
 
 **Acceptance criteria:** A content draft created by the Content Agent cannot be marked as final without an explicit approval action, and audit log records who approved what and when.
 

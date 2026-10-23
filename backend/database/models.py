@@ -36,6 +36,7 @@ class Creator(Base):
     content_plans = relationship("ContentPlan", back_populates="creator", cascade="all, delete-orphan")
     content_drafts = relationship("ContentDraft", back_populates="creator", cascade="all, delete-orphan")
     experiments = relationship("Experiment", back_populates="creator", cascade="all, delete-orphan")
+    approval_items = relationship("ApprovalItem", back_populates="creator", cascade="all, delete-orphan")
 
 
 class Post(Base):
@@ -159,6 +160,8 @@ class ContentDraft(Base):
     audio_suggestion = Column(String, nullable=True)
     recommended_time = Column(String, nullable=True)
     status = Column(String, default="draft", nullable=False)  # draft | approved | published | archived
+    published_at = Column(DateTime, nullable=True)
+    published_post_id = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=utcnow)
 
@@ -201,3 +204,23 @@ class TrendingSignal(Base):
 
     created_at = Column(DateTime, default=utcnow)
     expires_at = Column(DateTime, nullable=True)
+
+
+class ApprovalItem(Base):
+    __tablename__ = "approval_queue"
+
+    id = Column(String, primary_key=True)  # UUID string
+    creator_id = Column(String, ForeignKey("creators.id"), nullable=False)
+    item_type = Column(String, nullable=False)  # content_draft | strategy | content_plan | experiment
+    item_id = Column(String, nullable=False)
+    action_type = Column(String, nullable=False)  # draft_approval | strategy_pivot | experiment_launch
+    risk_level = Column(String, default="medium", nullable=False)  # low | medium | high
+    status = Column(String, default="pending", nullable=False)  # pending | approved | rejected | revision_requested
+    summary = Column(String, nullable=False)
+    payload_snapshot = Column(JSON, default=dict)
+    reviewer_decision = Column(JSON, default=dict)
+
+    created_at = Column(DateTime, default=utcnow)
+    reviewed_at = Column(DateTime, nullable=True)
+
+    creator = relationship("Creator", back_populates="approval_items")

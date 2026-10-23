@@ -348,6 +348,19 @@ def node_plan(state: Dict[str, Any], db: Optional[Session] = None) -> Dict[str, 
         "primary_draft": draft,
     }
 
+    from backend.api.routes_approvals import enqueue_approval_item
+    approval_rec = enqueue_approval_item(
+        creator_id=creator_id,
+        item_type="content_draft",
+        item_id=draft.get("draft_id"),
+        action_type="draft_approval",
+        summary=f"Draft ({draft.get('content_type', 'reel').upper()}): {draft.get('title')}",
+        payload_snapshot=draft,
+        risk_level="high",
+        db=db,
+    )
+    bundle["approval_item_id"] = approval_rec.id
+
     return {
         "strategy_output": bundle,
         "current_node": "plan",
