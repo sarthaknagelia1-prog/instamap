@@ -15,6 +15,7 @@ from backend.database.session import init_db, engine
 from backend.api.routes_ingest import router as ingest_router
 from backend.api.routes_analytics import router as analytics_router
 from backend.api.routes_creators import router as creators_router
+from backend.api.routes_orchestrator import router as orchestrator_router
 
 
 @asynccontextmanager
@@ -44,6 +45,8 @@ app.add_middleware(
 app.include_router(ingest_router)
 app.include_router(analytics_router)
 app.include_router(creators_router)
+app.include_router(orchestrator_router)
+
 
 
 

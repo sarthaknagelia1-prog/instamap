@@ -31,6 +31,8 @@ class Creator(Base):
 
     posts = relationship("Post", back_populates="creator", cascade="all, delete-orphan")
     ingestion_logs = relationship("IngestionLog", back_populates="creator", cascade="all, delete-orphan")
+    orchestrator_runs = relationship("OrchestratorRun", back_populates="creator", cascade="all, delete-orphan")
+
 
 
 class Post(Base):
@@ -82,3 +84,21 @@ class IngestionLog(Base):
     created_at = Column(DateTime, default=utcnow)
 
     creator = relationship("Creator", back_populates="ingestion_logs")
+
+
+class OrchestratorRun(Base):
+    __tablename__ = "orchestrator_runs"
+
+    id = Column(String, primary_key=True)  # UUID string
+    creator_id = Column(String, ForeignKey("creators.id"), nullable=False)
+    status = Column(String, nullable=False, default="running")  # running | completed | failed
+    trigger = Column(String, nullable=False, default="manual")  # manual | data_uploaded | scheduled
+    decision = Column(String, nullable=True)  # generate_full_plan | report_only | request_more_data
+    trace = Column(JSON, default=list)  # hop-by-hop audit trail
+    result = Column(JSON, default=dict)  # final generated bundle / report
+
+    created_at = Column(DateTime, default=utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    creator = relationship("Creator", back_populates="orchestrator_runs")
+

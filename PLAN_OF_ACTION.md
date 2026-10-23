@@ -69,13 +69,15 @@
 
 **Goal:** A state machine that routes between agents and enforces the decision tree.
 
-- [ ] Define agent message schema (Pydantic) — shared contract for all agent I/O
-- [ ] Implement LangGraph state machine: `ingest → analyze → decide → (plan | report-only)`
-- [ ] Decision thresholds (engagement drop %, trend duration, data staleness) as configurable rules
-- [ ] `POST /creator-plan` — synchronous or Celery-queued orchestrator run
-- [ ] `GET /creator-plan/{job_id}` — polling for async runs
+- [x] Define agent message schema (Pydantic) — shared contract for all agent I/O (`backend/agents/schemas.py`)
+- [x] Implement LangGraph state machine: `ingest → analyze → decide → (plan | report-only | request_more_data)`
+- [x] Decision thresholds (engagement drop %, trend duration, data staleness) as configurable rules (`decision_engine.py`)
+- [x] `POST /creator-plan` — orchestrator execution endpoint with database run persistence
+- [x] `GET /creator-plan/{job_id}` — polling endpoint for run results and execution traces
+- [x] `GET /creator-plan/history/{creator_id}` — history of all plan executions for a creator
 - [ ] Logging/tracing via Langfuse for every agent hop (prompt, tokens, latency)
-- [ ] Tests: orchestrator picks correct path for each of the 3–4 defined trigger scenarios
+- [x] Tests: orchestrator picks correct path for each defined trigger scenario (35/35 passing)
+
 
 **Acceptance criteria:** Triggering `/creator-plan` on a test creator produces a full trace showing which agents ran and why, ending in either a report or a strategy/content/experiment bundle.
 
