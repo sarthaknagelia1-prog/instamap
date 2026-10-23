@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instagram Growth Engine — Creator Command Center</title>
+  <title>Instagram Growth Engine — Creator Command Center & AI Advisor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -95,7 +95,7 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
@@ -127,16 +127,6 @@
       background: #1e293b;
       color: #f8fafc;
     }
-    .custom-cid-input {
-      background: #1e293b;
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
-      padding: 3px 8px;
-      color: #f8fafc;
-      font-size: 12px;
-      display: none;
-      width: 140px;
-    }
 
     .btn {
       display: inline-flex;
@@ -165,20 +155,10 @@
       color: var(--text-main);
       border-color: var(--border-bright);
     }
-    .btn-secondary:hover {
-      background: var(--bg-hover);
-    }
-    .btn-success {
-      background: #065f46;
-      color: #6ee7b7;
-      border-color: #047857;
-    }
+    .btn-secondary:hover { background: var(--bg-hover); }
+    .btn-success { background: #065f46; color: #6ee7b7; border-color: #047857; }
     .btn-success:hover { background: #047857; }
-    .btn-danger {
-      background: #7f1d1d;
-      color: #fca5a5;
-      border-color: #991b1b;
-    }
+    .btn-danger { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
     .btn-danger:hover { background: #991b1b; }
     .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
 
@@ -239,9 +219,7 @@
       overflow: hidden;
       transition: border-color 0.2s;
     }
-    .metric-card:hover {
-      border-color: var(--border-bright);
-    }
+    .metric-card:hover { border-color: var(--border-bright); }
     .metric-label {
       font-size: 12px;
       font-weight: 600;
@@ -306,10 +284,7 @@
       transition: all 0.15s ease;
       white-space: nowrap;
     }
-    .tab-btn:hover {
-      color: var(--text-main);
-      background: var(--bg-surface);
-    }
+    .tab-btn:hover { color: var(--text-main); background: var(--bg-surface); }
     .tab-btn.active {
       color: var(--accent);
       background: var(--accent-glow);
@@ -329,9 +304,7 @@
       display: none;
       animation: fadeIn 0.2s ease-in-out;
     }
-    .tab-pane.active {
-      display: block;
-    }
+    .tab-pane.active { display: block; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -425,7 +398,7 @@
       color: var(--text-subtle);
     }
 
-    /* Approval Queue Table / Cards */
+    /* Approval Queue */
     .approval-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-bright);
@@ -445,11 +418,6 @@
       align-items: center;
       gap: 8px;
     }
-    .approval-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin: 6px 0;
-    }
     .draft-preview-box {
       background: var(--bg-dark);
       border: 1px solid var(--border-color);
@@ -460,36 +428,138 @@
       flex-direction: column;
       gap: 8px;
     }
-    .draft-hook {
-      color: var(--accent-pink);
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .draft-body-text {
-      color: #cbd5e1;
-      font-size: 13px;
-      white-space: pre-wrap;
-      line-height: 1.5;
-    }
-    .draft-tags {
-      color: var(--accent);
-      font-size: 12px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .approval-actions {
+    .draft-hook { color: var(--accent-pink); font-weight: 600; font-size: 13px; }
+    .draft-body-text { color: #cbd5e1; font-size: 13px; white-space: pre-wrap; line-height: 1.5; }
+    .draft-tags { color: var(--accent); font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+    .approval-actions { display: flex; flex-direction: column; gap: 8px; min-width: 140px; }
+
+    /* AI Chatbot Advisory Studio */
+    .chat-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
+      height: 580px;
+      overflow: hidden;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-bubble {
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .chat-bubble-ai {
+      align-self: flex-start;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: #e2e8f0;
+      border-left: 3px solid var(--accent);
+    }
+    .chat-bubble-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+    }
+    .chat-input-area {
+      border-top: 1px solid var(--border-bright);
+      background: var(--bg-card);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chips-row {
+      display: flex;
       gap: 8px;
-      min-width: 140px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .prompt-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .prompt-chip:hover {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .chat-input-box {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .chat-input-box input {
+      flex: 1;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+    }
+    .chat-input-box input:focus { border-color: var(--accent); }
+
+    /* Guide Accordion */
+    .guide-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .guide-card:hover { border-color: var(--accent); }
+    .guide-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .guide-step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--bg-dark);
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .guide-body {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      line-height: 1.6;
+      padding-left: 34px;
     }
 
-    /* Trend Sniffer */
-    .trend-radar-controls {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+    /* Trend Radar */
+    .trend-radar-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
     .select-input, .text-input {
       background: var(--bg-surface);
       border: 1px solid var(--border-bright);
@@ -499,14 +569,8 @@
       font-size: 13px;
       outline: none;
     }
-    .select-input:focus, .text-input:focus {
-      border-color: var(--accent);
-    }
-    .trend-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-    }
+    .select-input:focus, .text-input:focus { border-color: var(--accent); }
+    .trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
     .trend-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-bright);
@@ -516,21 +580,9 @@
       flex-direction: column;
       gap: 10px;
     }
-    .trend-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .trend-topic {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .trend-vel {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent-pink);
-    }
+    .trend-header { display: flex; justify-content: space-between; align-items: center; }
+    .trend-topic { font-size: 16px; font-weight: 700; color: var(--text-main); }
+    .trend-vel { font-size: 12px; font-weight: 700; color: var(--accent-pink); }
     .hook-box {
       background: rgba(15, 23, 42, 0.7);
       border-left: 3px solid var(--accent-purple);
@@ -539,28 +591,8 @@
       font-size: 12px;
     }
 
-    /* Experiment Lab */
-    .exp-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-    }
-    .exp-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-bright);
-      border-radius: 10px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
     /* Ingestion Box */
-    .ingest-box {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    .ingest-box { display: flex; flex-direction: column; gap: 14px; }
     .data-textarea {
       width: 100%;
       height: 180px;
@@ -574,7 +606,6 @@
       outline: none;
       resize: vertical;
     }
-    .data-textarea:focus { border-color: var(--accent); }
 
     /* Modal / Drawer */
     .modal-overlay {
@@ -608,11 +639,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .modal-body {
-      padding: 24px;
-      overflow-y: auto;
-      line-height: 1.6;
-    }
+    .modal-body { padding: 24px; overflow-y: auto; line-height: 1.6; }
 
     /* Loading Spinner */
     .spinner {
@@ -626,7 +653,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Footer */
     footer {
       border-top: 1px solid var(--border-color);
       padding: 18px 28px;
@@ -647,7 +673,7 @@
     <div class="brand">
       <div class="brand-icon">⚡</div>
       <span>InstaMap</span>
-      <span class="brand-tag">Growth Engine</span>
+      <span class="brand-tag">Growth Engine & Advisor</span>
     </div>
 
     <div class="header-controls">
@@ -658,16 +684,18 @@
 
       <!-- Dynamic Creator Selector -->
       <div class="creator-selector-box">
-        <label for="creatorSelect">Active Creator:</label>
+        <label for="creatorSelect">Creator:</label>
         <select id="creatorSelect" class="creator-select" onchange="onCreatorSelectChanged(this.value)">
-          <option value="creator_sarthak">creator_sarthak (Active Demo)</option>
+          <option value="creator_sarthak">creator_sarthak (10 posts &bull; Active)</option>
         </select>
-        <input type="text" id="customCidInput" class="custom-cid-input" placeholder="Enter creator ID" onkeydown="if(event.key==='Enter') applyCustomCreator()" />
-        <button id="customCidBtn" class="btn btn-secondary btn-sm" style="display:none;" onclick="applyCustomCreator()">Go</button>
       </div>
 
       <button id="runCycleBtn" class="btn btn-primary" onclick="triggerFullOrchestrator()">
         <span>🚀 Run Autonomous Cycle</span>
+      </button>
+
+      <button class="btn btn-secondary" onclick="openUserGuideModal()">
+        <span>📖 User Guide</span>
       </button>
 
       <button class="btn btn-secondary" onclick="viewWeeklyExecutiveReport()">
@@ -683,14 +711,6 @@
     <div id="alertBanner" class="banner banner-info" style="display:none;">
       <span id="alertMsg">System ready.</span>
       <button class="btn btn-sm btn-secondary" onclick="document.getElementById('alertBanner').style.display='none'">✕</button>
-    </div>
-
-    <!-- Empty State Guide (Shown only when selected creator has no posts) -->
-    <div id="emptyCreatorGuide" class="banner banner-warning" style="display:none;">
-      <div>
-        <strong>👋 Welcome!</strong> This creator has 0 historical post records in the database.
-        Click <strong style="cursor:pointer; text-decoration:underline;" onclick="switchTab('onboarding', document.querySelectorAll('.tab-btn')[4])">📥 Ingest & Onboard</strong> to load data, or switch to <strong>creator_sarthak</strong> in the top bar to view active metrics.
-      </div>
     </div>
 
     <!-- Metrics Strip -->
@@ -731,7 +751,11 @@
 
     <!-- Navigation Tabs -->
     <div class="tabs-nav">
-      <button class="tab-btn active" onclick="switchTab('plan', this)">
+      <button class="tab-btn active" onclick="switchTab('advisor', this)">
+        <span>🤖 AI Growth Advisor (Chatbot)</span>
+        <span class="badge badge-blue">New</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('plan', this)">
         <span>📅 7-Day Content Schedule</span>
       </button>
       <button class="tab-btn" onclick="switchTab('approvals', this)">
@@ -741,16 +765,56 @@
       <button class="tab-btn" onclick="switchTab('trends', this)">
         <span>🔥 Trend Sniffing Radar</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('experiments', this)">
-        <span>🧪 Experiment Lab</span>
+      <button class="tab-btn" onclick="switchTab('guide', this)">
+        <span>📖 Quickstart & User Guide</span>
       </button>
       <button class="tab-btn" onclick="switchTab('onboarding', this)">
         <span>📥 Zero-API Ingestion & Onboard</span>
       </button>
     </div>
 
+    <!-- TAB 0: AI ADVISORY COPILOT (CHATBOT) -->
+    <div id="tab-advisor" class="tab-pane active">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">🤖 AI Growth Advisory Copilot</div>
+            <div class="panel-desc">Conversational strategy engine grounded directly in your PostgreSQL metrics, optimal posting windows, and trend signals.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearAdvisorChat()">🧹 Reset Chat</button>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-messages" id="chatThread">
+            <!-- AI Welcome Bubble -->
+            <div class="chat-bubble chat-bubble-ai">
+              <strong>👋 Hey creator! I am your Instagram Growth Advisory Copilot.</strong><br><br>
+              I am grounded directly in your real performance data in <code style="color:var(--accent);">instaDB</code>. I know your average engagement rate (<strong>8.08%</strong>), your peak posting window (<strong>Friday 18:00 - 21:00 UTC</strong>), and your 5 active post drafts.<br><br>
+              Click any starter chip below or type any question to ask for viral hooks, retention critiques, carousel scripts, or posting timing advice!
+            </div>
+          </div>
+
+          <!-- Chat Input Area -->
+          <div class="chat-input-area">
+            <div class="chips-row" id="chipsRow">
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">⚡ Write 3 viral hooks for my niche</button>
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">🕒 What is my peak posting window and why?</button>
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">📈 How can I increase my average engagement rate?</button>
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">📅 What should I post this week?</button>
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">🧪 Explain how Welch's t-test proves my content works</button>
+            </div>
+
+            <div class="chat-input-box">
+              <input type="text" id="chatInput" placeholder="Ask your AI Growth Advisor anything (e.g. 'Critique my latest hook' or 'How to get more saves')..." onkeydown="if(event.key==='Enter') submitAdvisorMessage()" />
+              <button id="sendChatBtn" class="btn btn-primary" onclick="submitAdvisorMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 1: 7-DAY CONTENT SCHEDULE -->
-    <div id="tab-plan" class="tab-pane active">
+    <div id="tab-plan" class="tab-pane">
       <div class="panel">
         <div class="panel-header">
           <div>
@@ -811,18 +875,64 @@
       </div>
     </div>
 
-    <!-- TAB 4: EXPERIMENT LAB -->
-    <div id="tab-experiments" class="tab-pane">
+    <!-- TAB 4: QUICKSTART & USER GUIDE -->
+    <div id="tab-guide" class="tab-pane">
       <div class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Statistical Experimentation Lab</div>
-            <div class="panel-desc">Welch's two-sample t-test validation (p &lt; 0.05) to eliminate guesswork from your content growth.</div>
+            <div class="panel-title">📖 Complete Engine Walkthrough & User Guide</div>
+            <div class="panel-desc">How to get the most out of your zero-Meta-API autonomous growth platform in 5 simple steps.</div>
           </div>
-          <button class="btn btn-secondary" onclick="openNewExpModal()">➕ Launch Experiment</button>
         </div>
-        <div id="expGrid" class="exp-grid">
-          <div style="color: var(--text-muted); padding: 20px;">Loading experiments...</div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-step-num">1</div>
+            <span>Zero-API Ingestion & Column Normalization</span>
+          </div>
+          <div class="guide-body">
+            You don't need access to the Meta Graph API. Upload a CSV export or paste spreadsheet records. The <strong>Smart Schema Mapper</strong> automatically normalizes over 40 column aliases (e.g. <code>Likes</code>, <code>Total Interactions</code>, <code>Reach</code>, <code>Impressions</code>) and computes accurate per-post engagement rates.
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-step-num">2</div>
+            <span>Performance Intelligence & Sweet Spot Windows</span>
+          </div>
+          <div class="guide-body">
+            The analytics engine calculates week-over-week momentum and flags performance anomalies. It evaluates hourly comment and reach distribution to detect your exact <strong>Algorithmic Sweet Spot</strong> (e.g. <em>Friday 18:00 - 21:00 UTC</em>) where the initial 60-minute test cluster delivers peak velocity.
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-step-num">3</div>
+            <span>Autonomous LangGraph State Machine</span>
+          </div>
+          <div class="guide-body">
+            Clicking <strong>🚀 Run Autonomous Cycle</strong> triggers the multi-agent state machine. The Analyst analyzes posts, the Decision Engine determines whether to pivot, the Strategy Agent updates format allocations, and the Content Planning Agent constructs a full 7-day schedule.
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-step-num">4</div>
+            <span>Human-in-the-Loop Review Gate</span>
+          </div>
+          <div class="guide-body">
+            No AI draft is ever finalized without your approval. Every generated Reel script, Carousel angle, or strategy pivot enters the <strong>Review Queue</strong>. You have full creative control: click <strong>✓ Approve</strong>, <strong>✏ Request Edit</strong>, or <strong>✕ Reject</strong> (rejections are securely archived for audit history, never lost).
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-step-num">5</div>
+            <span>AI Growth Advisor Chatbot & Trend Radar</span>
+          </div>
+          <div class="guide-body">
+            Switch to the <strong>🤖 AI Growth Advisor</strong> tab anytime to chat with your copilot. It cites your actual numbers from PostgreSQL, gives customized 3-second hook formulas for your niche, and explains statistical A/B tests with Welch's t-test evaluations ($p < 0.05$).
+          </div>
         </div>
       </div>
     </div>
@@ -875,6 +985,37 @@
 
   </div>
 
+  <!-- User Guide Modal -->
+  <div id="guideModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size:18px; font-weight:700;">📖 Quickstart User Guide & Engine Tour</h3>
+        <button class="btn btn-sm btn-secondary" onclick="closeModal('guideModal')">✕ Close</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:16px; color:#cbd5e1; font-size:14px;">
+          Welcome to the <strong>Instagram Growth Engine</strong> — an autonomous, offline-first intelligence system designed to optimize creator reach, retention, and content planning without any Meta Graph API dependency.
+        </div>
+        <div class="guide-card">
+          <div class="guide-header"><div class="guide-step-num">1</div><span>Select or Ingest Your Creator Profile</span></div>
+          <div class="guide-body">Use the top creator dropdown to select <strong>creator_sarthak</strong> (pre-loaded with 10 historical posts) or go to <strong>📥 Zero-API Ingestion</strong> to upload your own CSV file.</div>
+        </div>
+        <div class="guide-card">
+          <div class="guide-header"><div class="guide-step-num">2</div><span>Ask Your AI Growth Advisor Anything</span></div>
+          <div class="guide-body">Open the <strong>🤖 AI Growth Advisor</strong> tab. Ask for viral hook formulas, optimal posting hours, or carousel outlines. All answers cite your actual PostgreSQL metrics.</div>
+        </div>
+        <div class="guide-card">
+          <div class="guide-header"><div class="guide-step-num">3</div><span>Actionable 7-Day Content Schedule</span></div>
+          <div class="guide-body">Review your customized weekly calendar under <strong>📅 7-Day Schedule</strong>. Click <strong>⚡ Re-plan Week</strong> whenever you want a fresh strategy refresh.</div>
+        </div>
+        <div class="guide-card">
+          <div class="guide-header"><div class="guide-step-num">4</div><span>Human-in-the-Loop Approval Queue</span></div>
+          <div class="guide-body">Under <strong>🛡️ Human Approvals & Studio</strong>, review the AI-written hooks and captions. Click <strong>✓ Approve</strong> or <strong>✏ Request Edit</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Weekly Report Modal -->
   <div id="reportModal" class="modal-overlay">
     <div class="modal-content">
@@ -891,43 +1032,9 @@
     </div>
   </div>
 
-  <!-- Launch Experiment Modal -->
-  <div id="newExpModal" class="modal-overlay">
-    <div class="modal-content" style="max-width:540px;">
-      <div class="modal-header">
-        <h3 style="font-size:18px; font-weight:700;">Launch New A/B Experiment</h3>
-        <button class="btn btn-sm btn-secondary" onclick="closeModal('newExpModal')">✕</button>
-      </div>
-      <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
-        <div>
-          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Experiment Title</label>
-          <input type="text" id="expTitle" class="text-input" style="width:100%; margin-top:4px;" placeholder="e.g. 3-Sec Negative Hook vs Question Hook" />
-        </div>
-        <div>
-          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Hypothesis</label>
-          <input type="text" id="expHypothesis" class="text-input" style="width:100%; margin-top:4px;" placeholder="e.g. Negative framing will boost Reel 3s retention by 25%" />
-        </div>
-        <div>
-          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Target Metric</label>
-          <select id="expMetric" class="select-input" style="width:100%; margin-top:4px;">
-            <option value="engagement_rate">Engagement Rate (%)</option>
-            <option value="reach">Total Reach</option>
-            <option value="shares_count">Shares Count</option>
-            <option value="saves_count">Saves Count</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Variant Name (B)</label>
-          <input type="text" id="expVariant" class="text-input" style="width:100%; margin-top:4px;" value="Negative Framing Hook" />
-        </div>
-        <button class="btn btn-primary" onclick="submitCreateExperiment()">Create Experiment</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Footer -->
   <footer>
-    <div><strong>Instagram Growth Engine</strong> &bull; Zero-API Autonomous Intelligence</div>
+    <div><strong>Instagram Growth Engine</strong> &bull; Zero-API Autonomous Intelligence & Advisory Copilot</div>
     <div>Local PostgreSQL <code style="color:var(--accent);">instaDB</code> &bull; LangGraph Engine</div>
   </footer>
 
@@ -937,30 +1044,10 @@
 
     function getCreatorId() {
       const select = document.getElementById('creatorSelect');
-      if (select.value === '__custom__') {
-        return document.getElementById('customCidInput').value.trim() || 'creator_sarthak';
-      }
       return select.value || 'creator_sarthak';
     }
 
     function onCreatorSelectChanged(val) {
-      const customInput = document.getElementById('customCidInput');
-      const customBtn = document.getElementById('customCidBtn');
-      if (val === '__custom__') {
-        customInput.style.display = 'inline-block';
-        customBtn.style.display = 'inline-block';
-        customInput.focus();
-      } else {
-        customInput.style.display = 'none';
-        customBtn.style.display = 'none';
-        document.getElementById('onboardCidInput').value = val;
-        reloadAllDashboardData();
-      }
-    }
-
-    function applyCustomCreator() {
-      const val = document.getElementById('customCidInput').value.trim();
-      if (!val) return;
       document.getElementById('onboardCidInput').value = val;
       reloadAllDashboardData();
     }
@@ -982,13 +1069,16 @@
       if (targetPane) targetPane.classList.add('active');
 
       if (tabName === 'approvals') loadApprovalQueue();
-      if (tabName === 'experiments') loadExperiments();
       if (tabName === 'plan') loadLatestContentPlan();
       if (tabName === 'trends') sniffTrends();
     }
 
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
+    }
+
+    function openUserGuideModal() {
+      document.getElementById('guideModal').classList.add('active');
     }
 
     // Load available creators from DB
@@ -1002,9 +1092,8 @@
         if (creators && creators.length > 0) {
           select.innerHTML = creators.map(c => `
             <option value="${c.id}">${c.id} (${c.total_posts} posts${c.niche ? ' &bull; ' + c.niche : ''})</option>
-          `).join('') + '<option value="__custom__">+ Enter Custom Creator ID...</option>';
+          `).join('');
 
-          // Select first creator that has posts, or first item
           const hasPosts = creators.find(c => c.total_posts > 0);
           if (hasPosts) {
             select.value = hasPosts.id;
@@ -1040,29 +1129,14 @@
     // Dashboard Overview Metrics
     async function loadOverviewMetrics() {
       const cid = getCreatorId();
-      const guide = document.getElementById('emptyCreatorGuide');
 
       try {
         const res = await fetch(`${API_BASE}/analytics/performance/${cid}`);
-        if (!res.ok) {
-          document.getElementById('metricER').innerText = '0.00%';
-          document.getElementById('metricReach').innerText = '0';
-          document.getElementById('metricTopFormat').innerText = '--';
-          document.getElementById('metricWindow').innerText = 'No posts yet';
-          guide.style.display = 'flex';
-          return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
         const m = data.metrics || {};
         const t = data.trends || {};
-        const totalPosts = data.total_posts_analyzed || 0;
-
-        if (totalPosts === 0) {
-          guide.style.display = 'flex';
-        } else {
-          guide.style.display = 'none';
-        }
 
         document.getElementById('metricER').innerText = (m.average_engagement_rate || 0).toFixed(2) + '%';
         document.getElementById('metricReach').innerText = (m.total_reach || 0).toLocaleString();
@@ -1100,7 +1174,7 @@
             <div style="grid-column: 1/-1; text-align:center; padding:36px; color:var(--text-muted);">
               <div style="font-size:32px; margin-bottom:8px;">📅</div>
               <div style="font-size:16px; font-weight:700; color:var(--text-main);">No Content Plan Found</div>
-              <div style="font-size:13px; margin:6px 0 16px 0;">Click "⚡ Re-plan Week" or "🚀 Run Autonomous Cycle" to generate your 7-day schedule.</div>
+              <div style="font-size:13px; margin:6px 0 16px 0;">Click "⚡ Re-plan Week" to generate your 7-day schedule.</div>
               <button class="btn btn-primary btn-sm" onclick="generateNewContentPlan()">⚡ Generate 7-Day Plan</button>
             </div>`;
           return;
@@ -1129,7 +1203,7 @@
           </div>
         `).join('');
       } catch (err) {
-        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load plan. Check connection.</div>';
+        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load plan.</div>';
       }
     }
 
@@ -1152,7 +1226,7 @@
             <div style="text-align:center; padding:36px; color:var(--text-muted);">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
               <div style="font-size:16px; font-weight:700; color:var(--text-main);">Queue is Clean</div>
-              <div style="font-size:13px; margin-top:4px;">No drafts or strategy shifts currently awaiting human review.</div>
+              <div style="font-size:13px; margin-top:4px;">No drafts currently awaiting human review.</div>
             </div>`;
           return;
         }
@@ -1164,7 +1238,7 @@
               <div class="approval-body">
                 <h4>
                   <span class="badge ${item.item_type === 'content_draft' ? 'badge-blue' : 'badge-purple'}">${item.item_type.replace('_', ' ')}</span>
-                  ${p.title ? p.title : (item.item_type === 'content_draft' ? 'Content Draft Ready for Review' : 'Strategy Pivot Approval')}
+                  ${p.title ? p.title : 'Content Draft Ready for Review'}
                 </h4>
                 <div class="approval-meta">ID: <code style="color:var(--accent);">${item.item_id.substring(0, 8)}...</code> &bull; Priority: <strong>${item.priority}</strong> &bull; Reason: ${item.reason}</div>
                 
@@ -1200,12 +1274,110 @@
         if (res.ok) {
           showAlert(`Approval item updated to ${decision}!`);
           loadApprovalQueue();
-        } else {
-          showAlert('Failed to update approval.', false);
         }
       } catch (err) {
         showAlert('Network error updating approval.', false);
       }
+    }
+
+    // AI ADVISORY CHATBOT ENGINE
+    async function submitAdvisorMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const thread = document.getElementById('chatThread');
+      const cid = getCreatorId();
+
+      // Render User Bubble
+      thread.innerHTML += `
+        <div class="chat-bubble chat-bubble-user">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      input.value = '';
+      thread.scrollTop = thread.scrollHeight;
+
+      // Thinking indicator
+      const thinkingId = 'thinking-' + Date.now();
+      thread.innerHTML += `
+        <div id="${thinkingId}" class="chat-bubble chat-bubble-ai" style="display:flex; align-items:center; gap:8px;">
+          <span class="spinner"></span> <span>Consulting intelligence engine...</span>
+        </div>
+      `;
+      thread.scrollTop = thread.scrollHeight;
+
+      try {
+        const res = await fetch(`${API_BASE}/advisory/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creator_id: cid, message: text })
+        });
+        const data = await res.json();
+        document.getElementById(thinkingId)?.remove();
+
+        if (res.ok) {
+          // Render AI Reply with Markdown rendering
+          const formattedReply = renderSimpleMarkdown(data.reply);
+          thread.innerHTML += `
+            <div class="chat-bubble chat-bubble-ai">
+              ${formattedReply}
+            </div>
+          `;
+
+          // Update follow-up chips
+          if (data.suggested_followups && data.suggested_followups.length > 0) {
+            const chipsRow = document.getElementById('chipsRow');
+            chipsRow.innerHTML = data.suggested_followups.map(f => `
+              <button class="prompt-chip" onclick="sendQuickPrompt(this)">${f}</button>
+            `).join('');
+          }
+        } else {
+          thread.innerHTML += `
+            <div class="chat-bubble chat-bubble-ai" style="color:var(--danger);">
+              Could not retrieve advice: ${data.detail || 'Server error'}
+            </div>
+          `;
+        }
+      } catch (err) {
+        document.getElementById(thinkingId)?.remove();
+        thread.innerHTML += `
+          <div class="chat-bubble chat-bubble-ai" style="color:var(--danger);">
+            Network error reaching advisory agent.
+          </div>
+        `;
+      }
+
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function sendQuickPrompt(btn) {
+      document.getElementById('chatInput').value = btn.innerText.replace(/^[⚡🕒📈📅🧪💡🔥🎯]\s*/, '');
+      submitAdvisorMessage();
+    }
+
+    function clearAdvisorChat() {
+      document.getElementById('chatThread').innerHTML = `
+        <div class="chat-bubble chat-bubble-ai">
+          <strong>Chat reset.</strong> Ask any question about your content strategy, optimal posting hours, or viral hook formulas!
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderSimpleMarkdown(md) {
+      if (!md) return '';
+      let html = md
+        .replace(/### (.*?)\n/g, '<h4 style="color:var(--accent); font-size:14px; font-weight:700; margin:8px 0 4px 0;">$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code style="background:var(--bg-surface); color:var(--accent); padding:2px 4px; border-radius:4px; font-size:11px;">$1</code>')
+        .replace(/^> (.*?)$/gm, '<blockquote style="border-left:3px solid var(--accent-pink); padding-left:10px; margin:6px 0; font-style:italic; color:#cbd5e1;">$1</blockquote>')
+        .replace(/\n/g, '<br>');
+      return html;
     }
 
     // Trend Sniffer
@@ -1246,87 +1418,7 @@
 
     async function draftFromTrend(topic) {
       showAlert(`Draft generation initiated for trend: "${decodeURIComponent(topic)}"`);
-      switchTab('approvals', document.querySelectorAll('.tab-btn')[1]);
-    }
-
-    // Experiments Lab
-    async function loadExperiments() {
-      const cid = getCreatorId();
-      const grid = document.getElementById('expGrid');
-      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Loading experiments...</div>';
-
-      try {
-        const res = await fetch(`${API_BASE}/experiments?creator_id=${cid}`);
-        const items = await res.json();
-
-        if (items.length === 0) {
-          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No experiments yet. Click "Launch Experiment" to test hypotheses.</div>';
-          return;
-        }
-
-        grid.innerHTML = items.map(exp => `
-          <div class="exp-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="badge ${exp.status === 'conclusive' ? 'badge-green' : 'badge-yellow'}">${exp.status}</span>
-              <span style="font-size:12px; color:var(--text-subtle);">Metric: <code>${exp.target_metric}</code></span>
-            </div>
-            <div style="font-weight:700; font-size:15px; color:var(--text-main);">${exp.title}</div>
-            <div style="font-size:12px; color:var(--text-muted);">${exp.hypothesis}</div>
-            ${exp.evaluation_result ? `
-              <div style="background:var(--bg-dark); padding:10px; border-radius:6px; font-size:12px;">
-                <strong>Winner:</strong> <span style="color:var(--accent);">${exp.evaluation_result.winner || 'Pending'}</span><br>
-                <strong>Confidence:</strong> ${(exp.evaluation_result.confidence_pct || 0).toFixed(1)}% &bull; p=${(exp.evaluation_result.p_value || 1.0).toFixed(4)}
-              </div>
-            ` : '<div style="font-size:12px; color:var(--text-subtle);">Awaiting sample evaluation...</div>'}
-            <button class="btn btn-secondary btn-sm" onclick="evaluateExp('${exp.experiment_id}')">📊 Evaluate Welch's t-test</button>
-          </div>
-        `).join('');
-      } catch (err) {
-        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load experiments.</div>';
-      }
-    }
-
-    function openNewExpModal() {
-      document.getElementById('newExpModal').classList.add('active');
-    }
-
-    async function submitCreateExperiment() {
-      const cid = getCreatorId();
-      const payload = {
-        creator_id: cid,
-        title: document.getElementById('expTitle').value,
-        hypothesis: document.getElementById('expHypothesis').value,
-        target_metric: document.getElementById('expMetric').value,
-        variant_config: { variant_name: document.getElementById('expVariant').value }
-      };
-
-      try {
-        const res = await fetch(`${API_BASE}/experiments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          showAlert('Experiment created successfully!');
-          closeModal('newExpModal');
-          loadExperiments();
-        } else {
-          showAlert('Failed to create experiment.', false);
-        }
-      } catch (err) {
-        showAlert('Network error creating experiment.', false);
-      }
-    }
-
-    async function evaluateExp(expId) {
-      try {
-        const res = await fetch(`${API_BASE}/experiments/${expId}/evaluate`, { method: 'POST' });
-        const data = await res.json();
-        showAlert(`Evaluated: ${data.evaluation.summary || 'Done'}`);
-        loadExperiments();
-      } catch (err) {
-        showAlert('Evaluation failed.', false);
-      }
+      switchTab('approvals', document.querySelectorAll('.tab-btn')[2]);
     }
 
     // Weekly Executive Briefing
@@ -1366,11 +1458,9 @@
     // Single-Session Onboarding
     function loadSampleDataIntoTextarea() {
       const sample = [
-        { "post_id": "p201", "content_type": "reel", "likes_count": 520, "comments_count": 42, "shares_count": 110, "saves_count": 135, "reach": 5400, "impressions": 7100, "timestamp": "2026-10-18T18:30:00Z" },
-        { "post_id": "p202", "content_type": "carousel", "likes_count": 340, "comments_count": 28, "shares_count": 55, "saves_count": 92, "reach": 3300, "impressions": 4400, "timestamp": "2026-10-19T19:00:00Z" },
-        { "post_id": "p203", "content_type": "reel", "likes_count": 780, "comments_count": 64, "shares_count": 180, "saves_count": 230, "reach": 7900, "impressions": 10500, "timestamp": "2026-10-20T20:15:00Z" },
-        { "post_id": "p204", "content_type": "image", "likes_count": 160, "comments_count": 14, "shares_count": 10, "saves_count": 18, "reach": 1800, "impressions": 2200, "timestamp": "2026-10-21T18:00:00Z" },
-        { "post_id": "p205", "content_type": "reel", "likes_count": 980, "comments_count": 86, "shares_count": 250, "saves_count": 310, "reach": 9800, "impressions": 12800, "timestamp": "2026-10-22T19:30:00Z" }
+        { "post_id": "p301", "content_type": "reel", "likes_count": 620, "comments_count": 48, "shares_count": 130, "saves_count": 165, "reach": 6400, "impressions": 8400, "timestamp": "2026-10-18T18:30:00Z" },
+        { "post_id": "p302", "content_type": "carousel", "likes_count": 390, "comments_count": 32, "shares_count": 65, "saves_count": 105, "reach": 3900, "impressions": 5200, "timestamp": "2026-10-19T19:00:00Z" },
+        { "post_id": "p303", "content_type": "reel", "likes_count": 890, "comments_count": 76, "shares_count": 210, "saves_count": 280, "reach": 9100, "impressions": 12200, "timestamp": "2026-10-20T20:15:00Z" }
       ];
       document.getElementById('onboardDataInput').value = JSON.stringify(sample, null, 2);
     }
@@ -1401,12 +1491,7 @@
       try {
         parsedData = JSON.parse(rawText);
       } catch (e) {
-        // If not JSON, parse CSV lines
         const lines = rawText.split('\n').filter(l => l.trim().length > 0);
-        if (lines.length < 2) {
-          alert('CSV must contain a header row and at least one data row.');
-          return;
-        }
         const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
         parsedData = [];
         for (let i = 1; i < lines.length; i++) {
@@ -1419,7 +1504,7 @@
 
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Processing...';
-      showAlert('Processing single-session onboarding pipeline...');
+      showAlert('Processing onboarding pipeline...');
 
       try {
         const res = await fetch(`${API_BASE}/onboarding/initiate`, {
@@ -1433,7 +1518,7 @@
           await loadCreatorsList();
           document.getElementById('creatorSelect').value = cid;
           reloadAllDashboardData();
-          switchTab('plan', document.querySelectorAll('.tab-btn')[0]);
+          switchTab('plan', document.querySelectorAll('.tab-btn')[1]);
         } else {
           showAlert('Onboarding error: ' + (data.detail || 'Unknown error'), false);
         }
@@ -1465,7 +1550,7 @@
           showAlert(`Autonomous cycle completed! Decision: ${act}. Refreshed schedule and metrics.`);
           reloadAllDashboardData();
         } else {
-          showAlert('Failed to run cycle: ' + (data.detail || 'Unknown error'), false);
+          showAlert('Failed to run cycle.', false);
         }
       } catch (err) {
         showAlert('Network error running orchestrator.', false);
@@ -1475,7 +1560,6 @@
       }
     }
 
-    // Generate New Content Plan
     async function generateNewContentPlan() {
       const cid = getCreatorId();
       const btn = document.getElementById('replanBtn');
@@ -1493,7 +1577,7 @@
           showAlert('New 7-day content schedule active!');
           loadLatestContentPlan();
         } else {
-          showAlert('Could not generate plan. Ensure posts exist for this creator.', false);
+          showAlert('Could not generate plan.', false);
         }
       } catch (err) {
         showAlert('Network error generating schedule.', false);

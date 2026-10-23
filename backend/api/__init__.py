@@ -11,6 +11,7 @@ from backend.api.routes_experiments import router as experiments_router
 from backend.api.routes_trends import router as trends_router
 from backend.api.routes_approvals import router as approvals_router
 from backend.api.routes_reports import router as reports_router
+from backend.api.routes_advisory import router as advisory_router
 
 __all__ = [
     "ingest_router",
@@ -22,4 +23,5 @@ __all__ = [
     "trends_router",
     "approvals_router",
     "reports_router",
+    "advisory_router",
 ]
