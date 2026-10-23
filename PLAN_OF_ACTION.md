@@ -33,11 +33,12 @@
 - [x] `data/ingestion/ingest.py` — full pipeline: adapter → readiness agent → persistence
 - [x] Wire `POST /data-readiness` and `POST /data/ingest` API endpoints to this pipeline
 - [x] Unit tests: dedupe, bad timestamps, missing-field detection, quality score edge cases
-- [ ] `data/adapters/json_adapter.py` — manual JSON payload ingestion (for frontend form-based entry)
-- [ ] `GET /creators` — list all creators in the system
-- [ ] `GET /creators/{id}/posts` — list ingested posts for a creator (paginated)
-- [ ] `GET /creators/{id}/ingestion-logs` — ingestion history and quality scores over time
-- [ ] CSV template download endpoint (`GET /data/csv-template`) — pre-formatted CSV with correct headers the creator can fill in
+- [x] `data/adapters/json_adapter.py` — manual JSON payload ingestion (for frontend form-based entry)
+- [x] `GET /creators` — list all creators in the system
+- [x] `GET /creators/{id}/posts` — list ingested posts for a creator (paginated)
+- [x] `GET /creators/{id}/ingestion-logs` — ingestion history and quality scores over time
+- [x] CSV template download endpoint (`GET /data/csv-template`) — pre-formatted CSV with correct headers the creator can fill in
+
 
 **Data input methods (no Meta API required):**
 1. **CSV upload** — creator exports data from Instagram Insights (Professional Dashboard) or any third-party tool (Iconosquare, Later, Metricool, Hootsuite) and uploads the CSV file

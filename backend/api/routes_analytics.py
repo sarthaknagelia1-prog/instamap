@@ -133,12 +133,49 @@ def analyze_performance(
     return result
 
 
+import time
+
+# Thread-safe in-memory cache for dashboard summary: creator_id -> (timestamp, data)
+_SUMMARY_CACHE: Dict[str, tuple[float, Dict[str, Any]]] = {}
+CACHE_TTL_SECONDS = 300  # 5 minutes cache
+
+
+def invalidate_analytics_cache(creator_id: Optional[str] = None) -> None:
+    """Invalidates the summary cache for a specific creator or completely."""
+    if creator_id:
+        _SUMMARY_CACHE.pop(creator_id, None)
+    else:
+        _SUMMARY_CACHE.clear()
+
+
+class TimeSeriesPoint(BaseModel):
+    post_id: str
+    timestamp: Optional[str] = None
+    content_type: Optional[str] = None
+    engagement_rate: Optional[float] = None
+    likes_count: Optional[int] = None
+    comments_count: Optional[int] = None
+    saves_count: Optional[int] = None
+    reach: Optional[int] = None
+
+
+class TimeSeriesResponse(BaseModel):
+    creator_id: str
+    total_data_points: int
+    series: List[TimeSeriesPoint]
+
+
 @router.get("/analytics/summary", response_model=AnalyticsSummaryResponse)
 def get_analytics_summary(
     creator_id: str = Query(..., description="Creator identifier"),
     db: Session = Depends(get_db),
 ):
-    """Returns quick overview summary metrics for dashboard display."""
+    """Returns quick overview summary metrics for dashboard display (cached)."""
+    now = time.time()
+    cached = _SUMMARY_CACHE.get(creator_id)
+    if cached and (now - cached[0] < CACHE_TTL_SECONDS):
+        return cached[1]
+
     creator = db.get(Creator, creator_id)
     if not creator:
         raise HTTPException(
@@ -148,7 +185,7 @@ def get_analytics_summary(
 
     posts = db.query(Post).filter_by(creator_id=creator_id).all()
     if not posts:
-        return {
+        empty_summary = {
             "creator_id": creator_id,
             "total_posts": 0,
             "average_engagement_rate": 0.0,
@@ -156,6 +193,8 @@ def get_analytics_summary(
             "recent_trend": "stable",
             "best_posting_window": "Insufficient data",
         }
+        _SUMMARY_CACHE[creator_id] = (now, empty_summary)
+        return empty_summary
 
     post_dicts = [
         {
@@ -177,7 +216,7 @@ def get_analytics_summary(
     trends = detect_trends(post_dicts)
     best_window = find_best_posting_window(post_dicts)
 
-    return {
+    summary = {
         "creator_id": creator_id,
         "total_posts": len(posts),
         "average_engagement_rate": metrics.get("average_engagement_rate", 0.0),
@@ -185,3 +224,52 @@ def get_analytics_summary(
         "recent_trend": trends.get("recent_trend", "stable"),
         "best_posting_window": best_window,
     }
+    _SUMMARY_CACHE[creator_id] = (now, summary)
+    return summary
+
+
+@router.get("/analytics/time-series", response_model=TimeSeriesResponse)
+def get_analytics_time_series(
+    creator_id: str = Query(..., description="Creator identifier"),
+    limit: int = Query(50, ge=5, le=500, description="Number of recent posts to plot"),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns chronologically ordered metrics (date, engagement rate, reach, likes)
+    designed directly for rendering frontend line/bar charts.
+    """
+    creator = db.get(Creator, creator_id)
+    if not creator:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Creator '{creator_id}' not found.",
+        )
+
+    posts = (
+        db.query(Post)
+        .filter_by(creator_id=creator_id)
+        .order_by(Post.timestamp.asc())
+        .limit(limit)
+        .all()
+    )
+
+    series_data = [
+        {
+            "post_id": p.post_id,
+            "timestamp": p.timestamp.isoformat() if p.timestamp else None,
+            "content_type": p.content_type,
+            "engagement_rate": p.engagement_rate,
+            "likes_count": p.likes_count,
+            "comments_count": p.comments_count,
+            "saves_count": p.saves_count,
+            "reach": p.reach,
+        }
+        for p in posts
+    ]
+
+    return {
+        "creator_id": creator_id,
+        "total_data_points": len(series_data),
+        "series": series_data,
+    }
+

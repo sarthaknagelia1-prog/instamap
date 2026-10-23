@@ -22,8 +22,10 @@ from backend.data.adapters.paste_adapter import PasteAdapter
 from backend.data.schema_mapper import detect_source_platform
 from backend.data.ingestion.data_readiness_agent import run as run_data_readiness
 from backend.data.ingestion.ingest import run_ingestion
+from backend.api.routes_analytics import invalidate_analytics_cache
 
 router = APIRouter(tags=["Ingestion"])
+
 
 
 # ---------------------------------------------------------
@@ -241,6 +243,8 @@ async def ingest_data(
         raw_data=records,
         quality_threshold=threshold,
     )
+    if result.get("data_ready"):
+        invalidate_analytics_cache(creator_id)
 
     return result
 
@@ -274,5 +278,8 @@ def ingest_pasted_data(
         raw_data=records,
         quality_threshold=payload.quality_threshold,
     )
+    if result.get("data_ready"):
+        invalidate_analytics_cache(payload.creator_id)
 
     return result
+
