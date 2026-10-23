@@ -64,18 +64,37 @@ app.include_router(advisory_router)
 
 # Mount static directory and creator dashboard SPA
 static_dir = os.path.join(os.path.dirname(__file__), "static")
+frontend_dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+
 if os.path.isdir(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+react_assets_dir = os.path.join(frontend_dist_dir, "assets")
+if os.path.isdir(react_assets_dir):
+    app.mount("/assets", StaticFiles(directory=react_assets_dir), name="react_assets")
 
 
 @app.get("/", tags=["Dashboard UI"], include_in_schema=False)
 @app.get("/dashboard", tags=["Dashboard UI"])
 def get_dashboard_ui():
-    """Serves the creator command center dashboard web interface."""
+    """Serves the creator command center dynamic React dashboard, falling back to static."""
+    react_index = os.path.join(frontend_dist_dir, "index.html")
+    if os.path.isfile(react_index):
+        return FileResponse(react_index)
     index_file = os.path.join(static_dir, "index.html")
     if os.path.isfile(index_file):
         return FileResponse(index_file)
     return {"message": "Creator Dashboard index.html not found."}
+
+
+@app.get("/legacy", tags=["Legacy UI"])
+def get_legacy_dashboard_ui():
+    """Explicitly serves the standalone static HTML dashboard."""
+    index_file = os.path.join(static_dir, "index.html")
+    if os.path.isfile(index_file):
+        return FileResponse(index_file)
+    return {"message": "Legacy Dashboard index.html not found."}
+
 @app.get("/health", tags=["Health"])
 def health_check():
     """Healthcheck endpoint verifying server and database status."""

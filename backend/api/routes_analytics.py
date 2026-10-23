@@ -228,6 +228,98 @@ def get_analytics_summary(
     return summary
 
 
+@router.get("/analytics/performance/{creator_id}")
+def get_creator_performance_analytics(
+    creator_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns full overview performance analytics for a creator matching
+    both frontend React client and the dashboard SPA requirements.
+    """
+    creator = db.get(Creator, creator_id)
+    if not creator:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Creator '{creator_id}' not found.",
+        )
+
+    posts = (
+        db.query(Post)
+        .filter_by(creator_id=creator_id)
+        .order_by(Post.timestamp.desc())
+        .all()
+    )
+    if not posts:
+        return {
+            "creator_id": creator_id,
+            "metrics": {
+                "total_posts": 0,
+                "average_engagement_rate": 0.0,
+                "top_content_type": "reel",
+                "total_reach": 0,
+            },
+            "trends": {
+                "recent_trend": "stable",
+                "week_over_week_delta_pct": 0.0,
+            },
+            "best_posting_window": "Insufficient data",
+            "average_engagement_rate": 0.0,
+            "total_reach": 0,
+            "top_content_type": "reel",
+            "recent_trend": "stable",
+            "week_over_week_delta_pct": 0.0,
+        }
+
+    post_dicts = [
+        {
+            "post_id": p.post_id,
+            "content_type": p.content_type,
+            "timestamp": p.timestamp.isoformat() if p.timestamp else None,
+            "likes_count": p.likes_count,
+            "comments_count": p.comments_count,
+            "shares_count": p.shares_count,
+            "saves_count": p.saves_count,
+            "reach": p.reach,
+            "impressions": p.impressions,
+            "engagement_rate": p.engagement_rate,
+        }
+        for p in posts
+    ]
+
+    metrics = calculate_aggregate_metrics(post_dicts)
+    trends = detect_trends(post_dicts)
+    best_window = find_best_posting_window(post_dicts)
+
+    total_reach = sum(p.reach or 0 for p in posts)
+    avg_er = metrics.get("average_engagement_rate", 0.0)
+    top_format = metrics.get("top_content_type", "reel")
+    wow = trends.get("week_over_week_delta_pct", 0.0)
+    recent_trend = trends.get("recent_trend", "stable")
+
+    return {
+        "creator_id": creator_id,
+        "metrics": {
+            "total_posts": len(posts),
+            "average_engagement_rate": avg_er,
+            "top_content_type": top_format,
+            "total_reach": total_reach,
+            "content_type_breakdown": metrics.get("content_type_breakdown", {}),
+        },
+        "trends": {
+            "recent_trend": recent_trend,
+            "week_over_week_delta_pct": wow,
+        },
+        "best_posting_window": best_window,
+        "average_engagement_rate": avg_er,
+        "total_reach": total_reach,
+        "top_content_type": top_format,
+        "recent_trend": recent_trend,
+        "week_over_week_delta_pct": wow,
+    }
+
+
+
 @router.get("/analytics/time-series", response_model=TimeSeriesResponse)
 def get_analytics_time_series(
     creator_id: str = Query(..., description="Creator identifier"),
