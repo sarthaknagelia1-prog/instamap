@@ -17,6 +17,7 @@ from backend.api.routes_analytics import router as analytics_router
 from backend.api.routes_creators import router as creators_router
 from backend.api.routes_orchestrator import router as orchestrator_router
 from backend.api.routes_content import router as content_router
+from backend.api.routes_experiments import router as experiments_router
 
 
 @asynccontextmanager
@@ -48,6 +49,8 @@ app.include_router(analytics_router)
 app.include_router(creators_router)
 app.include_router(orchestrator_router)
 app.include_router(content_router)
+app.include_router(experiments_router)
+
 
 
 

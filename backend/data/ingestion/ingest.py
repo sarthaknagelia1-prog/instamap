@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session, sessionmaker
 
 from backend.data.ingestion.data_readiness_agent import run as run_data_readiness
+from backend.analytics.metrics import calculate_post_engagement_rate
 from backend.database.models import Creator, Post, IngestionLog
 from backend.database.session import get_session_factory, SessionLocal
 
@@ -64,6 +65,7 @@ def persist_records(session: Session, creator_id: str, source: str, records: Lis
         target.watch_time_avg = record.get("watch_time_avg")
         target.caption_text = record.get("caption_text")
         target.hashtags = record.get("hashtags") or []
+        target.engagement_rate = calculate_post_engagement_rate(record)
         target.source = source
 
         if not existing:

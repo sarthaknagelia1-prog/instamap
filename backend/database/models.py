@@ -35,9 +35,11 @@ class Creator(Base):
     strategies = relationship("Strategy", back_populates="creator", cascade="all, delete-orphan")
     content_plans = relationship("ContentPlan", back_populates="creator", cascade="all, delete-orphan")
     content_drafts = relationship("ContentDraft", back_populates="creator", cascade="all, delete-orphan")
+    experiments = relationship("Experiment", back_populates="creator", cascade="all, delete-orphan")
 
 
 class Post(Base):
+
 
     __tablename__ = "posts"
     __table_args__ = (UniqueConstraint("creator_id", "post_id", name="uq_creator_post"),)
@@ -162,5 +164,26 @@ class ContentDraft(Base):
 
     creator = relationship("Creator", back_populates="content_drafts")
     content_plan = relationship("ContentPlan", back_populates="drafts")
+
+
+class Experiment(Base):
+    __tablename__ = "experiments"
+
+    id = Column(String, primary_key=True)  # UUID string
+    creator_id = Column(String, ForeignKey("creators.id"), nullable=False)
+    title = Column(String, nullable=False)
+    hypothesis = Column(String, nullable=False)
+    metric_target = Column(String, default="engagement_rate", nullable=False)  # engagement_rate | save_rate | reach | shares
+    status = Column(String, default="proposed", nullable=False)  # proposed | active | completed_conclusive | completed_inconclusive | cancelled
+    controlled_variables = Column(JSON, default=dict)  # {"content_type": "reel", "topic": "growth"}
+    variant_a = Column(JSON, default=dict)  # {"name": "Control", "description": "...", "post_ids": []}
+    variant_b = Column(JSON, default=dict)  # {"name": "Treatment", "description": "...", "post_ids": []}
+    evaluation_result = Column(JSON, default=dict)  # {"p_value": 0.02, "winner": "variant_b", ...}
+
+    created_at = Column(DateTime, default=utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    creator = relationship("Creator", back_populates="experiments")
+
 
 

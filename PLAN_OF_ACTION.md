@@ -116,12 +116,12 @@ Each drafted content item includes everything the creator needs to manually publ
 
 **Goal:** Structured hypothesis testing with statistically sound evaluation.
 
-- [ ] `experiments/models.py` — hypothesis, variants, controlled variables, metric, status
-- [ ] `agents/experiment_agent.py` — proposes experiments from strategy/analysis gaps
-- [ ] `experiments/evaluator.py` — significance testing (e.g. two-proportion z-test or bootstrap, depending on metric type)
-- [ ] `POST /experiments`, `GET /experiments/{id}`, `POST /experiments/{id}/evaluate` endpoints
-- [ ] On conclusive result: write outcome back to strategy memory (feedback loop)
-- [ ] Tests: evaluator correctness against known-significant/known-insignificant synthetic datasets
+- [x] `experiments/models.py` (and `database/models.py`) — hypothesis, variants, controlled variables, metric, status
+- [x] `agents/experiment_agent.py` — proposes experiments from strategy/analysis gaps
+- [x] `experiments/evaluator.py` — significance testing (Welch's two-sample t-test with Abramowitz & Stegun p-value approximation)
+- [x] `POST /experiments/propose`, `POST /experiments`, `GET /experiments`, `GET /experiments/{id}`, `POST /experiments/{id}/assign-posts`, `POST /experiments/{id}/evaluate` endpoints
+- [x] On conclusive result: write outcome back to strategy memory (feedback loop)
+- [x] Tests: evaluator correctness against known-significant/known-insignificant synthetic datasets (46/46 passing)
 
 **Experiment workflow (manual execution):**
 1. System proposes an experiment (e.g. "Post reels at 6 PM vs 9 PM for 2 weeks")
