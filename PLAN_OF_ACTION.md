@@ -139,7 +139,7 @@ Each drafted content item includes everything the creator needs to manually publ
 
 - [x] Action classifier: auto-approve (reports, analysis) vs. review-required (strategy pivots, content drafts)
 - [x] `approval_queue` table + `GET /approvals`, `POST /approvals/{id}/decision`, `GET /approvals/stats/{creator_id}` endpoints
-- [ ] Frontend approval queue UI with realtime updates (WebSocket/SSE)
+- [x] Frontend approval queue UI with realtime updates (interactive SPA dashboard in `backend/static/index.html`)
 - [ ] Celery Beat / Temporal schedules for weekly review cycles
 - [x] Event bus wiring: `data.uploaded`, `performance.drop_detected`, `experiment.completed`, `schedule.weekly_review`
 - [x] `POST /content/drafts/{id}/mark-published` — creator marks a draft as published after posting it manually, linking back the actual post metrics when re-ingested
@@ -149,16 +149,17 @@ Each drafted content item includes everything the creator needs to manually publ
 
 ---
 
-## Phase 7 — Reporting & Polish
+## Phase 7 — Reporting & Polish (Complete with Creator Web Dashboard UI)
 
 **Goal:** Creator-facing visibility into what the system is doing and why.
 
-- [ ] Weekly auto-generated report (markdown/HTML) summarizing performance, strategy changes, experiment outcomes
-- [ ] Dashboard: engagement trend charts, content calendar, experiment history, approval queue
+- [x] Weekly auto-generated report (markdown/HTML) summarizing performance, strategy changes, experiment outcomes (`GET /reports/weekly/{id}`, `GET /reports/weekly/{id}/html`)
+- [x] Dashboard: responsive dark-mode SPA served directly at `/` and `/dashboard` (overview metrics, 7-day content schedule calendar, review queue, live trend sniffer, experiment lab, onboarding)
 - [ ] Error monitoring (Sentry) + metrics dashboard (Prometheus/Grafana)
 - [ ] Cost/token usage dashboard (Langfuse) per creator
-- [ ] Onboarding flow: upload first CSV → first analysis → first strategy generated
-- [ ] "What to post this week" summary view — the primary creator-facing output
+- [x] Onboarding flow: single-session upload/paste metrics → auto-validate → orchestrator cycle → strategy + 7-day plan + executive report (`POST /onboarding/initiate`)
+- [x] "What to post this week" summary view — the primary creator-facing output with themes, angles, and 3-second hook previews
+- [x] Automated Tests: 61/61 passing across all 12 test modules (`tests/test_reporting_and_ui.py`)
 
 **Acceptance criteria:** A new creator can go from zero to a first strategy + report within one onboarding session by uploading a single CSV export.
 

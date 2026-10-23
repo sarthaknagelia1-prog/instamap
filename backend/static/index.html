@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Growth Engine — Creator Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #111827;
+      --bg-surface: #1e293b;
+      --bg-hover: #334155;
+      --border-color: #1f293d;
+      --border-bright: #334155;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --accent-pink: #ec4899;
+      --accent-purple: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Top Nav */
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6, #38bdf8);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.35);
+    }
+    .brand-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .creator-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+    .creator-picker label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .creator-picker input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      width: 130px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border-color: var(--border-bright);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+    }
+    .btn-success {
+      background: #065f46;
+      color: #6ee7b7;
+      border-color: #047857;
+    }
+    .btn-success:hover { background: #047857; }
+    .btn-danger {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border-color: #991b1b;
+    }
+    .btn-danger:hover { background: #991b1b; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    /* Container */
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      flex: 1;
+    }
+
+    /* Metrics Strip */
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .metric-card:hover {
+      border-color: var(--border-bright);
+    }
+    .metric-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .metric-val {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-top: 6px;
+      color: var(--text-main);
+    }
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .badge-purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .badge-yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .badge-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+    /* Navigation Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: var(--bg-surface);
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      background: var(--accent-glow);
+      border-bottom: 2px solid var(--accent);
+    }
+    .tab-badge {
+      background: var(--accent);
+      color: var(--bg-dark);
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Content Cards Grid */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* 7-Day Plan Cards */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .plan-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .plan-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .plan-day {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .plan-day-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--accent);
+    }
+    .plan-theme {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .plan-angle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .plan-hook {
+      background: rgba(15, 23, 42, 0.7);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-style: italic;
+      color: #cbd5e1;
+      border-left: 3px solid var(--accent-pink);
+    }
+    .plan-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      font-size: 11px;
+      color: var(--text-subtle);
+    }
+
+    /* Approval Queue Table / Cards */
+    .approval-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+    .approval-body h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .approval-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 6px 0;
+    }
+    .approval-details {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color: #cbd5e1;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .approval-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Trend Sniffer */
+    .trend-radar-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .select-input, .text-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+    .select-input:focus, .text-input:focus {
+      border-color: var(--accent);
+    }
+    .trend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .trend-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .trend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .trend-topic {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .trend-vel {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-pink);
+    }
+    .hook-box {
+      background: rgba(15, 23, 42, 0.7);
+      border-left: 3px solid var(--accent-purple);
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+    }
+
+    /* Experiment Lab */
+    .exp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .exp-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Ingestion Box */
+    .ingest-box {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .data-textarea {
+      width: 100%;
+      height: 180px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 12px;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      resize: vertical;
+    }
+    .data-textarea:focus { border-color: var(--accent); }
+
+    /* Alert / Banner */
+    .banner {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.3s;
+    }
+    .banner-info { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #bae6fd; }
+    .banner-success { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #a7f3d0; }
+
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 820px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 18px 28px;
+      font-size: 12px;
+      color: var(--text-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <span>InstaMap</span>
+      <span class="brand-tag">Growth Engine</span>
+    </div>
+
+    <div class="header-controls">
+      <div class="status-indicator">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+
+      <div class="creator-picker">
+        <label for="creatorIdInput">Creator:</label>
+        <input type="text" id="creatorIdInput" value="creator_onboarding_demo" placeholder="creator_id" />
+        <button class="btn btn-secondary btn-sm" onclick="reloadAllDashboardData()">Switch</button>
+      </div>
+
+      <button class="btn btn-primary" onclick="triggerFullOrchestrator()">
+        <span>🚀 Run Autonomous Cycle</span>
+      </button>
+
+      <button class="btn btn-secondary" onclick="viewWeeklyExecutiveReport()">
+        <span>📄 Weekly Briefing</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+
+    <!-- Notification Banner -->
+    <div id="alertBanner" class="banner banner-info" style="display:none;">
+      <span id="alertMsg">System ready.</span>
+      <button class="btn btn-sm btn-secondary" onclick="document.getElementById('alertBanner').style.display='none'">Dismiss</button>
+    </div>
+
+    <!-- Metrics Strip -->
+    <div class="metrics-strip">
+      <div class="metric-card">
+        <div class="metric-label">Average Engagement</div>
+        <div class="metric-val" id="metricER">--%</div>
+        <div class="metric-sub">
+          <span id="trendBadge" class="badge badge-green">Steady</span>
+          <span id="metricWoW">--% WoW</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Total Reach</div>
+        <div class="metric-val" id="metricReach">--</div>
+        <div class="metric-sub">Across all analyzed posts</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Top Content Format</div>
+        <div class="metric-val" id="metricTopFormat" style="text-transform: capitalize;">--</div>
+        <div class="metric-sub">Highest algorithmic distribution</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Algorithmic Sweet Spot</div>
+        <div class="metric-val" id="metricWindow" style="font-size: 16px; margin-top: 10px;">--</div>
+        <div class="metric-sub">Peak audience active window</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Review Queue</div>
+        <div class="metric-val" id="metricPendingApprovals">0</div>
+        <div class="metric-sub"><span class="badge badge-yellow" id="pendingBadge">Awaiting Decision</span></div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('plan', this)">
+        <span>📅 7-Day Content Schedule</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('approvals', this)">
+        <span>🛡️ Human Approvals & Studio</span>
+        <span class="tab-badge" id="approvalTabCount">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('trends', this)">
+        <span>🔥 Trend Sniffing Radar</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('experiments', this)">
+        <span>🧪 Experiment Lab</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('onboarding', this)">
+        <span>📥 Zero-API Ingestion & Onboard</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: 7-DAY CONTENT SCHEDULE -->
+    <div id="tab-plan" class="tab-pane active">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">What to Post This Week (Actionable 7-Day Plan)</div>
+            <div class="panel-desc">Data-backed content blueprint tailored to creator retention pillars and format allocation.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="generateNewContentPlan()">⚡ Re-plan Week</button>
+        </div>
+        <div id="planGrid" class="plan-grid">
+          <div style="color: var(--text-muted); padding: 20px;">Loading content schedule...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: APPROVAL QUEUE & CONTENT STUDIO -->
+    <div id="tab-approvals" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Human-in-the-Loop Review Queue</div>
+            <div class="panel-desc">Every AI-generated post draft, experimental angle, or strategy pivot requires your explicit blessing.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="loadApprovalQueue()">🔄 Refresh Queue</button>
+        </div>
+        <div id="approvalList">
+          <div style="color: var(--text-muted); padding: 20px;">Loading review queue...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TREND SNIFFING RADAR -->
+    <div id="tab-trends" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Real-Time Trend Sniffer & Hook Synthesizer</div>
+            <div class="panel-desc">Sniffs emerging discussions across public Reddit communities and Google Trends without paid APIs.</div>
+          </div>
+        </div>
+
+        <div class="trend-radar-controls">
+          <select id="trendNicheSelect" class="select-input">
+            <option value="Tech & AI">Tech & AI</option>
+            <option value="Fitness & Wellness">Fitness & Wellness</option>
+            <option value="Personal Finance">Personal Finance</option>
+            <option value="Creator Economy">Creator Economy</option>
+            <option value="Travel & Adventure">Travel & Adventure</option>
+            <option value="Fashion & Aesthetics">Fashion & Aesthetics</option>
+            <option value="Food & Culinary">Food & Culinary</option>
+            <option value="Productivity & Habits">Productivity & Habits</option>
+          </select>
+          <button class="btn btn-primary" onclick="sniffTrends()">📡 Sniff Live Trends</button>
+        </div>
+
+        <div id="trendGrid" class="trend-grid">
+          <div style="color: var(--text-muted); padding: 20px;">Select a niche and click "Sniff Live Trends" to scan active signals.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: EXPERIMENT LAB -->
+    <div id="tab-experiments" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Statistical Experimentation Lab</div>
+            <div class="panel-desc">Welch's two-sample t-test validation (p &lt; 0.05) to eliminate guesswork from your content growth.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="openNewExpModal()">➕ Launch Experiment</button>
+        </div>
+        <div id="expGrid" class="exp-grid">
+          <div style="color: var(--text-muted); padding: 20px;">Loading experiments...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: ONBOARDING & ZERO-API INGESTION -->
+    <div id="tab-onboarding" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Single-Session Creator Onboarding</div>
+            <div class="panel-desc">Import past Instagram metrics via JSON or clipboard copy to automatically ingest, generate strategic allocations, and construct the first week's plan.</div>
+          </div>
+        </div>
+
+        <div class="ingest-box">
+          <div style="display:flex; gap:12px; align-items:center;">
+            <label style="font-size:13px; font-weight:600;">Creator Niche:</label>
+            <select id="onboardNiche" class="select-input">
+              <option value="Tech & AI">Tech & AI</option>
+              <option value="Fitness & Wellness">Fitness & Wellness</option>
+              <option value="Personal Finance">Personal Finance</option>
+              <option value="Creator Economy">Creator Economy</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadSampleDataIntoTextarea()">📋 Load Sample Data</button>
+          </div>
+
+          <textarea id="onboardDataInput" class="data-textarea" placeholder="Paste array of JSON post records or CSV rows here..."></textarea>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:var(--text-subtle);">Offline-first smart mapper automatically normalizes column aliases.</span>
+            <button class="btn btn-primary" onclick="submitOnboardingPipeline()">🚀 Ingest & Complete Onboarding</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Weekly Report Modal -->
+  <div id="reportModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size:18px; font-weight:700;">Executive Weekly Briefing</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-secondary" onclick="openPrintableReport()">🖨️ Printable View</button>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('reportModal')">✕ Close</button>
+        </div>
+      </div>
+      <div class="modal-body" id="reportBody">
+        <div style="color: var(--text-muted); padding: 20px;">Generating briefing...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Launch Experiment Modal -->
+  <div id="newExpModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 style="font-size:18px; font-weight:700;">Launch New A/B Experiment</h3>
+        <button class="btn btn-sm btn-secondary" onclick="closeModal('newExpModal')">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Experiment Title</label>
+          <input type="text" id="expTitle" class="text-input" style="width:100%; margin-top:4px;" placeholder="e.g. 3-Sec Negative Hook vs Question Hook" />
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Hypothesis</label>
+          <input type="text" id="expHypothesis" class="text-input" style="width:100%; margin-top:4px;" placeholder="e.g. Negative framing will boost Reel 3s retention by 25%" />
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Target Metric</label>
+          <select id="expMetric" class="select-input" style="width:100%; margin-top:4px;">
+            <option value="engagement_rate">Engagement Rate (%)</option>
+            <option value="reach">Total Reach</option>
+            <option value="shares_count">Shares Count</option>
+            <option value="saves_count">Saves Count</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Variant Name (B)</label>
+          <input type="text" id="expVariant" class="text-input" style="width:100%; margin-top:4px;" value="Negative Framing Hook" />
+        </div>
+        <button class="btn btn-primary" onclick="submitCreateExperiment()">Create Experiment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div><strong>Instagram Growth Engine</strong> &bull; Zero-API Autonomous Intelligence</div>
+    <div>Local PostgreSQL <code style="color:var(--accent);">instaDB</code> &bull; LangGraph Engine</div>
+  </footer>
+
+  <!-- Dashboard JavaScript Logic -->
+  <script>
+    const API_BASE = window.location.origin;
+
+    function getCreatorId() {
+      return document.getElementById('creatorIdInput').value.trim() || 'test_creator_123';
+    }
+
+    function showAlert(msg, isSuccess = true) {
+      const banner = document.getElementById('alertBanner');
+      const msgEl = document.getElementById('alertMsg');
+      banner.className = 'banner ' + (isSuccess ? 'banner-success' : 'banner-info');
+      msgEl.innerText = msg;
+      banner.style.display = 'flex';
+      setTimeout(() => { banner.style.display = 'none'; }, 6000);
+    }
+
+    function switchTab(tabName, el) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      const targetPane = document.getElementById('tab-' + tabName);
+      if (targetPane) targetPane.classList.add('active');
+
+      if (tabName === 'approvals') loadApprovalQueue();
+      if (tabName === 'experiments') loadExperiments();
+      if (tabName === 'plan') loadLatestContentPlan();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Healthcheck
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        const data = await res.json();
+        const dot = document.getElementById('statusDot');
+        const txt = document.getElementById('statusText');
+        if (data.status === 'ok') {
+          dot.style.background = 'var(--success)';
+          dot.style.boxShadow = '0 0 8px var(--success)';
+          txt.innerText = 'Engine Online';
+        } else {
+          dot.style.background = 'var(--danger)';
+          txt.innerText = 'Engine Degraded';
+        }
+      } catch (err) {
+        document.getElementById('statusDot').style.background = 'var(--danger)';
+        document.getElementById('statusText').innerText = 'Offline';
+      }
+    }
+
+    // Dashboard Overview Metrics
+    async function loadOverviewMetrics() {
+      const cid = getCreatorId();
+      try {
+        const res = await fetch(`${API_BASE}/analytics/performance/${cid}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const m = data.metrics || {};
+        const t = data.trends || {};
+
+        document.getElementById('metricER').innerText = (m.average_engagement_rate || 0).toFixed(2) + '%';
+        document.getElementById('metricReach').innerText = (m.total_reach || 0).toLocaleString();
+        document.getElementById('metricTopFormat').innerText = m.top_content_type || 'Reel';
+        document.getElementById('metricWindow').innerText = data.best_posting_window || 'Calculating...';
+
+        const wow = t.week_over_week_delta_pct || 0;
+        document.getElementById('metricWoW').innerText = (wow >= 0 ? '+' : '') + wow.toFixed(1) + '% WoW';
+        const badge = document.getElementById('trendBadge');
+        if (wow > 5) {
+          badge.className = 'badge badge-green';
+          badge.innerText = 'Accelerating';
+        } else if (wow < -5) {
+          badge.className = 'badge badge-red';
+          badge.innerText = 'Decelerating';
+        } else {
+          badge.className = 'badge badge-blue';
+          badge.innerText = 'Steady';
+        }
+      } catch (err) {
+        console.error('Error fetching metrics', err);
+      }
+    }
+
+    // Latest Content Plan
+    async function loadLatestContentPlan() {
+      const cid = getCreatorId();
+      const grid = document.getElementById('planGrid');
+      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Loading schedule...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/content/plans/${cid}`);
+        if (!res.ok) {
+          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No plan found. Click "Run Autonomous Cycle" or "Re-plan Week" to generate one.</div>';
+          return;
+        }
+        const data = await res.json();
+        const items = data.scheduled_items || [];
+        if (items.length === 0) {
+          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No scheduled items in active plan.</div>';
+          return;
+        }
+
+        grid.innerHTML = items.map(item => `
+          <div class="plan-card">
+            <div class="plan-day">
+              <span class="plan-day-name">${item.day}</span>
+              <span class="badge ${item.content_type === 'reel' ? 'badge-purple' : (item.content_type === 'carousel' ? 'badge-blue' : 'badge-green')}">${item.content_type || 'post'}</span>
+            </div>
+            <div class="plan-theme">${item.theme || 'Theme'}</div>
+            <div class="plan-angle">${item.concept_angle || ''}</div>
+            ${item.hook_preview ? `<div class="plan-hook">"${item.hook_preview}"</div>` : ''}
+            <div class="plan-footer">
+              <span>🕒 ${item.scheduled_time || 'Optimal'}</span>
+              <span>🎯 ${item.target_metric || 'engagement'}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load plan.</div>';
+      }
+    }
+
+    // Approvals Queue
+    async function loadApprovalQueue() {
+      const cid = getCreatorId();
+      const list = document.getElementById('approvalList');
+      list.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Checking pending approvals...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/approvals?creator_id=${cid}`);
+        const items = await res.json();
+        const pending = items.filter(i => i.status === 'pending');
+
+        document.getElementById('metricPendingApprovals').innerText = pending.length;
+        document.getElementById('approvalTabCount').innerText = pending.length;
+
+        if (pending.length === 0) {
+          list.innerHTML = `
+            <div style="text-align:center; padding:36px; color:var(--text-muted);">
+              <div style="font-size:32px; margin-bottom:8px;">✅</div>
+              <div style="font-size:16px; font-weight:700; color:var(--text-main);">Queue is Clean</div>
+              <div style="font-size:13px; margin-top:4px;">No drafts or strategy shifts currently awaiting human review.</div>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = pending.map(item => `
+          <div class="approval-card" id="appr-${item.approval_id}">
+            <div class="approval-body">
+              <h4>
+                <span class="badge ${item.item_type === 'content_draft' ? 'badge-blue' : 'badge-purple'}">${item.item_type.replace('_', ' ')}</span>
+                ${item.item_type === 'content_draft' ? 'Post Draft Ready for Approval' : 'Strategy Pivot Approval'}
+              </h4>
+              <div class="approval-meta">ID: <code style="color:var(--accent);">${item.item_id.substring(0, 8)}...</code> &bull; Priority: <strong>${item.priority}</strong> &bull; Reason: ${item.reason}</div>
+              <div class="approval-details">${JSON.stringify(item.payload, null, 2)}</div>
+            </div>
+            <div class="approval-actions">
+              <button class="btn btn-success btn-sm" onclick="decideApproval('${item.approval_id}', 'approved')">✓ Approve</button>
+              <button class="btn btn-secondary btn-sm" onclick="decideApproval('${item.approval_id}', 'revision_requested')">✏ Request Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="decideApproval('${item.approval_id}', 'rejected')">✕ Reject</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load approvals.</div>';
+      }
+    }
+
+    async function decideApproval(approvalId, decision) {
+      try {
+        const res = await fetch(`${API_BASE}/approvals/${approvalId}/decision`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision: decision, feedback: `Decision via Dashboard UI: ${decision}` })
+        });
+        if (res.ok) {
+          showAlert(`Approval item updated to ${decision}!`);
+          loadApprovalQueue();
+        } else {
+          showAlert('Failed to update approval.', false);
+        }
+      } catch (err) {
+        showAlert('Network error updating approval.', false);
+      }
+    }
+
+    // Trend Sniffer
+    async function sniffTrends() {
+      const niche = document.getElementById('trendNicheSelect').value;
+      const grid = document.getElementById('trendGrid');
+      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;"><div class="spinner"></div> Sniffing real-time community discussions and search surges...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/trends/sniff?niche=${encodeURIComponent(niche)}&limit=6`);
+        const data = await res.json();
+        const signals = data.signals || [];
+
+        if (signals.length === 0) {
+          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No signals detected for this niche.</div>';
+          return;
+        }
+
+        grid.innerHTML = signals.map(s => `
+          <div class="trend-card">
+            <div class="trend-header">
+              <span class="badge badge-blue">${s.source}</span>
+              <span class="trend-vel">Velocity: ${(s.velocity_score || 0).toFixed(0)}</span>
+            </div>
+            <div class="trend-topic">${s.topic}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${s.context_summary || ''}</div>
+            <div class="hook-box">
+              <strong style="color:var(--accent);">Suggested Hook:</strong><br>
+              <em>"${s.suggested_hooks ? s.suggested_hooks[0] : 'Hook synthesis in progress'}"</em>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:auto;" onclick="draftFromTrend('${encodeURIComponent(s.topic)}')">✨ Convert to Draft</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Error sniffing trends.</div>';
+      }
+    }
+
+    async function draftFromTrend(topic) {
+      showAlert(`Draft generation initiated for trend: "${decodeURIComponent(topic)}"`);
+      switchTab('approvals', document.querySelectorAll('.tab-btn')[1]);
+    }
+
+    // Experiments Lab
+    async function loadExperiments() {
+      const cid = getCreatorId();
+      const grid = document.getElementById('expGrid');
+      grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Loading experiments...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/experiments?creator_id=${cid}`);
+        const items = await res.json();
+
+        if (items.length === 0) {
+          grid.innerHTML = '<div style="color:var(--text-muted); padding:20px;">No experiments yet. Click "Launch Experiment" to test hypotheses.</div>';
+          return;
+        }
+
+        grid.innerHTML = items.map(exp => `
+          <div class="exp-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge ${exp.status === 'conclusive' ? 'badge-green' : 'badge-yellow'}">${exp.status}</span>
+              <span style="font-size:12px; color:var(--text-subtle);">Metric: <code>${exp.target_metric}</code></span>
+            </div>
+            <div style="font-weight:700; font-size:15px; color:var(--text-main);">${exp.title}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${exp.hypothesis}</div>
+            ${exp.evaluation_result ? `
+              <div style="background:var(--bg-dark); padding:10px; border-radius:6px; font-size:12px;">
+                <strong>Winner:</strong> <span style="color:var(--accent);">${exp.evaluation_result.winner || 'Pending'}</span><br>
+                <strong>Confidence:</strong> ${(exp.evaluation_result.confidence_pct || 0).toFixed(1)}% &bull; p=${(exp.evaluation_result.p_value || 1.0).toFixed(4)}
+              </div>
+            ` : '<div style="font-size:12px; color:var(--text-subtle);">Awaiting sample evaluation...</div>'}
+            <button class="btn btn-secondary btn-sm" onclick="evaluateExp('${exp.experiment_id}')">📊 Evaluate Welch's t-test</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load experiments.</div>';
+      }
+    }
+
+    function openNewExpModal() {
+      document.getElementById('newExpModal').classList.add('active');
+    }
+
+    async function submitCreateExperiment() {
+      const cid = getCreatorId();
+      const payload = {
+        creator_id: cid,
+        title: document.getElementById('expTitle').value,
+        hypothesis: document.getElementById('expHypothesis').value,
+        target_metric: document.getElementById('expMetric').value,
+        variant_config: { variant_name: document.getElementById('expVariant').value }
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/experiments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showAlert('Experiment created successfully!');
+          closeModal('newExpModal');
+          loadExperiments();
+        } else {
+          showAlert('Failed to create experiment.', false);
+        }
+      } catch (err) {
+        showAlert('Network error creating experiment.', false);
+      }
+    }
+
+    async function evaluateExp(expId) {
+      try {
+        const res = await fetch(`${API_BASE}/experiments/${expId}/evaluate`, { method: 'POST' });
+        const data = await res.json();
+        showAlert(`Evaluated: ${data.evaluation.summary || 'Done'}`);
+        loadExperiments();
+      } catch (err) {
+        showAlert('Evaluation failed.', false);
+      }
+    }
+
+    // Weekly Executive Briefing
+    async function viewWeeklyExecutiveReport() {
+      const cid = getCreatorId();
+      const modal = document.getElementById('reportModal');
+      const body = document.getElementById('reportBody');
+      modal.classList.add('active');
+      body.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Compiling executive briefing...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/reports/weekly/${cid}`);
+        if (!res.ok) {
+          body.innerHTML = '<div style="color:var(--danger); padding:20px;">Could not generate report. Ingest data first.</div>';
+          return;
+        }
+        const data = await res.json();
+        body.innerHTML = `
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;">
+            <div style="background:var(--bg-surface); padding:16px; border-radius:8px; margin-bottom:16px;">
+              <h3 style="color:var(--accent); font-size:18px; margin-bottom:4px;">Executive Briefing for ${cid}</h3>
+              <div style="font-size:12px; color:var(--text-muted);">Generated: ${new Date().toLocaleDateString()} &bull; Niche: ${data.niche}</div>
+            </div>
+            <pre style="white-space:pre-wrap; background:var(--bg-dark); padding:16px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#cbd5e1; border:1px solid var(--border-color);">${data.markdown_report}</pre>
+          </div>
+        `;
+      } catch (err) {
+        body.innerHTML = '<div style="color:var(--danger); padding:20px;">Error generating report.</div>';
+      }
+    }
+
+    function openPrintableReport() {
+      const cid = getCreatorId();
+      window.open(`${API_BASE}/reports/weekly/${cid}/html`, '_blank');
+    }
+
+    // Single-Session Onboarding
+    function loadSampleDataIntoTextarea() {
+      const sample = [
+        { "post_id": "p101", "content_type": "reel", "likes_count": 480, "comments_count": 34, "shares_count": 89, "saves_count": 112, "reach": 4200, "impressions": 5800, "timestamp": "2026-10-18T18:30:00Z" },
+        { "post_id": "p102", "content_type": "carousel", "likes_count": 310, "comments_count": 22, "shares_count": 45, "saves_count": 78, "reach": 2900, "impressions": 3800, "timestamp": "2026-10-19T19:00:00Z" },
+        { "post_id": "p103", "content_type": "reel", "likes_count": 650, "comments_count": 49, "shares_count": 140, "saves_count": 190, "reach": 6100, "impressions": 8200, "timestamp": "2026-10-20T20:15:00Z" },
+        { "post_id": "p104", "content_type": "image", "likes_count": 140, "comments_count": 11, "shares_count": 8, "saves_count": 14, "reach": 1500, "impressions": 1900, "timestamp": "2026-10-21T18:00:00Z" },
+        { "post_id": "p105", "content_type": "reel", "likes_count": 890, "comments_count": 72, "shares_count": 210, "saves_count": 260, "reach": 8900, "impressions": 11400, "timestamp": "2026-10-22T19:30:00Z" }
+      ];
+      document.getElementById('onboardDataInput').value = JSON.stringify(sample, null, 2);
+    }
+
+    async function submitOnboardingPipeline() {
+      const cid = getCreatorId();
+      const niche = document.getElementById('onboardNiche').value;
+      const rawText = document.getElementById('onboardDataInput').value.trim();
+
+      if (!rawText) {
+        alert('Please provide historical data or click "Load Sample Data".');
+        return;
+      }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(rawText);
+      } catch (e) {
+        alert('Data must be a valid JSON array of post records.');
+        return;
+      }
+
+      showAlert('Processing single-session onboarding pipeline...');
+
+      try {
+        const res = await fetch(`${API_BASE}/onboarding/initiate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creator_id: cid, niche: niche, raw_data: parsedData })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showAlert(`Onboarding complete! ${data.posts_ingested} posts ingested, strategy and 7-day schedule generated.`);
+          reloadAllDashboardData();
+          switchTab('plan', document.querySelectorAll('.tab-btn')[0]);
+        } else {
+          showAlert('Onboarding failed: ' + (data.detail || 'Unknown error'), false);
+        }
+      } catch (err) {
+        showAlert('Network error during onboarding.', false);
+      }
+    }
+
+    // Run Full Autonomous Orchestrator Cycle
+    async function triggerFullOrchestrator() {
+      const cid = getCreatorId();
+      showAlert('Triggering autonomous orchestrator cycle...');
+      try {
+        const res = await fetch(`${API_BASE}/creator-plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creator_id: cid, trigger: 'manual_dashboard_cycle' })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showAlert(`Autonomous cycle completed! Decision: ${data.decision.decision_type || 'Success'}`);
+          reloadAllDashboardData();
+        } else {
+          showAlert('Failed to run cycle.', false);
+        }
+      } catch (err) {
+        showAlert('Network error running orchestrator.', false);
+      }
+    }
+
+    async function generateNewContentPlan() {
+      const cid = getCreatorId();
+      showAlert('Generating fresh 7-day content schedule...');
+      try {
+        const res = await fetch(`${API_BASE}/content/plans/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creator_id: cid, days: 7 })
+        });
+        if (res.ok) {
+          showAlert('New 7-day schedule active!');
+          loadLatestContentPlan();
+        } else {
+          showAlert('Failed to generate schedule.', false);
+        }
+      } catch (err) {
+        showAlert('Network error generating schedule.', false);
+      }
+    }
+
+    function reloadAllDashboardData() {
+      loadOverviewMetrics();
+      loadLatestContentPlan();
+      loadApprovalQueue();
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      checkHealth();
+      reloadAllDashboardData();
+      setInterval(checkHealth, 30000);
+    });
+  </script>
+</body>
+</html>
