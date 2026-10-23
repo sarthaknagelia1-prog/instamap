@@ -10,7 +10,7 @@ Integration tests for FastAPI endpoints:
 from pathlib import Path
 from backend.database.models import Creator, Post, IngestionLog
 
-SAMPLE_CSV_PATH = Path(__file__).resolve().parent.parent / "instagram-growth-engine-data-scripts" / "sample_data" / "creator_export.csv"
+SAMPLE_CSV_PATH = Path(__file__).resolve().parent.parent / "sample_data" / "creator_export.csv"
 
 
 def test_health_check(client):
