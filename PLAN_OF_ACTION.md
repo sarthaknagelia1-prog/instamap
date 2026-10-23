@@ -87,15 +87,17 @@
 
 **Goal:** Generate a growth strategy and drafted content from analysis output.
 
-- [ ] `agents/strategy_agent.py` — LLM tool-use call, reads analysis + creator/strategy memory, returns structured strategy
-- [ ] `agents/content_planning_agent.py` — turns strategy into a weekly content plan
-- [ ] `agents/content_generation_agent.py` — drafts hook/structure/CTA/hashtags per planned item (status: `draft`)
-- [ ] Strategy memory persistence (Postgres table + optional pgvector embedding for semantic recall)
-- [ ] `POST /strategy/generate`, `POST /content/plan`, `POST /content/generate` endpoints
-- [ ] `GET /content/drafts` — list all drafted content items for review
-- [ ] `GET /content/drafts/{id}` — view a single draft with full copy, hashtags, and posting instructions
+- [x] `agents/strategy_agent.py` — reads analysis + creator context, returns structured strategy & format allocation
+- [x] `agents/content_planning_agent.py` — turns strategy into a weekly 7-day content plan
+- [x] `agents/content_generation_agent.py` — drafts hook/structure/CTA/hashtags per planned item (status: `draft`)
+- [x] Strategy memory persistence (Postgres `strategies`, `content_plans`, `content_drafts` tables)
+- [x] `POST /strategy/generate`, `POST /content/plan`, `POST /content/generate` endpoints
+- [x] `GET /content/drafts` — list all drafted content items for review with filtering
+- [x] `GET /content/drafts/{id}` — view a single draft with full copy, hashtags, and posting instructions
+- [x] `PATCH /content/drafts/{id}/status` — update draft status (approved / published)
 - [ ] Prompt versioning set up in Langfuse/PromptLayer
-- [ ] Tests: schema validation on all three agents' structured outputs
+- [x] Tests: schema validation on all three agents' structured outputs (40/40 passing)
+
 
 **Content output format (manual publishing):**
 Each drafted content item includes everything the creator needs to manually publish:

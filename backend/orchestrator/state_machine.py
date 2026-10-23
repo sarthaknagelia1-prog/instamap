@@ -26,7 +26,13 @@ from backend.analytics.metrics import calculate_aggregate_metrics, calculate_pos
 from backend.analytics.trends import detect_trends, find_best_posting_window
 from backend.analytics.anomalies import detect_anomalies
 from backend.agents.analyst_agent import run_analyst_agent
+from backend.agents.strategy_agent import run_strategy_agent
+from backend.agents.content_planning_agent import run_content_planning_agent
+from backend.agents.content_generation_agent import run_content_generation_agent
 from backend.orchestrator.decision_engine import evaluate_decision
+
+
+
 
 
 def _build_post_dicts(posts: List[Post]) -> List[Dict[str, Any]]:
@@ -265,43 +271,77 @@ def node_report_only(state: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def node_plan(state: Dict[str, Any]) -> Dict[str, Any]:
+def node_plan(state: Dict[str, Any], db: Optional[Session] = None) -> Dict[str, Any]:
     """
-    Phase 4 Strategy Bridge:
-    Generates action directives when a drop or declining trend demands intervention.
+    Phase 4 Strategy & Content Generation:
+    Executes StrategyAgent -> ContentPlanningAgent -> ContentGenerationAgent.
     """
-    t0 = time.time()
-    decision = state.get("decision", {})
+    creator_id = state["creator_id"]
     metrics = state.get("metrics", {})
-    top_type = metrics.get("top_content_type", "reels")
+    trends = state.get("trends", {})
+    posts = state.get("posts", [])
+    best_window = find_best_posting_window(posts)
 
-    strategy = {
-        "status": "strategy_pivot_triggered",
-        "trigger_reasons": decision.get("reasons", []),
-        "priority_directives": [
-            f"Double down on '{top_type}' which is outperforming your secondary formats.",
-            "Re-structure video hooks within the first 3 seconds to arrest engagement drop.",
-            "Adjust posting window toward peak algorithmic activity periods.",
-        ],
-        "planned_content_framework": {
-            "focus_format": top_type,
-            "suggested_frequency": "3-4 posts per week",
-            "content_pillars": ["Educational breakdown", "Behind-the-scenes authority", "Trend commentary"],
-        },
-    }
-
-    trace_msg = {
-        "agent_name": "strategy_planner",
-        "action_taken": f"Formulated strategy pivot plan centered on {top_type}",
+    # 1. Strategy Agent
+    t_strat = time.time()
+    strategy = run_strategy_agent(
+        creator_id=creator_id,
+        metrics=metrics,
+        trends=trends,
+        db=db,
+    )
+    msg_strat = {
+        "agent_name": "strategy_agent",
+        "action_taken": f"Formulated strategy: {strategy.get('primary_content_type')} focus, {strategy.get('target_cadence')}",
         "timestamp": utcnow().isoformat(),
-        "details": {"focus_format": top_type},
-        "duration_ms": round((time.time() - t0) * 1000, 2),
+        "details": {"format_allocation": strategy.get("format_allocation")},
+        "duration_ms": round((time.time() - t_strat) * 1000, 2),
     }
 
-    trace = list(state.get("execution_trace", [])) + [trace_msg]
+    # 2. Content Planning Agent
+    t_plan = time.time()
+    plan = run_content_planning_agent(
+        creator_id=creator_id,
+        strategy=strategy,
+        best_posting_window=best_window,
+        db=db,
+    )
+    msg_plan = {
+        "agent_name": "content_planning_agent",
+        "action_taken": f"Scheduled 7-day calendar with {plan.get('planned_post_count')} posts",
+        "timestamp": utcnow().isoformat(),
+        "details": {"planned_post_count": plan.get("planned_post_count")},
+        "duration_ms": round((time.time() - t_plan) * 1000, 2),
+    }
+
+    # 3. Content Generation Agent (drafts top priority item)
+    t_draft = time.time()
+    sample_item = plan["scheduled_items"][0] if plan.get("scheduled_items") else {"content_type": strategy.get("primary_content_type", "reel"), "theme": "Growth Strategy"}
+    draft = run_content_generation_agent(
+        creator_id=creator_id,
+        plan_item=sample_item,
+        plan_id=plan.get("plan_id"),
+        db=db,
+    )
+    msg_draft = {
+        "agent_name": "content_generation_agent",
+        "action_taken": f"Drafted ready-to-post {draft.get('content_type')} package: '{draft.get('title')}'",
+        "timestamp": utcnow().isoformat(),
+        "details": {"draft_id": draft.get("draft_id"), "content_type": draft.get("content_type")},
+        "duration_ms": round((time.time() - t_draft) * 1000, 2),
+    }
+
+    trace = list(state.get("execution_trace", [])) + [msg_strat, msg_plan, msg_draft]
+
+    bundle = {
+        "status": "strategy_and_content_bundle_generated",
+        "strategy": strategy,
+        "content_plan": plan,
+        "primary_draft": draft,
+    }
 
     return {
-        "strategy_output": strategy,
+        "strategy_output": bundle,
         "current_node": "plan",
         "execution_trace": trace,
     }
@@ -357,7 +397,8 @@ def run_orchestrator(
     elif next_branch == "report_only":
         state = {**state, **node_report_only(state)}
     else:
-        state = {**state, **node_plan(state)}
+        state = {**state, **node_plan(state, db=db)}
 
     state["completed_at"] = utcnow().isoformat()
     return state
+
