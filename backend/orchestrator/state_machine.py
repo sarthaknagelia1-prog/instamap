@@ -30,6 +30,7 @@ from backend.agents.strategy_agent import run_strategy_agent
 from backend.agents.content_planning_agent import run_content_planning_agent
 from backend.agents.content_generation_agent import run_content_generation_agent
 from backend.orchestrator.decision_engine import evaluate_decision
+from backend.data.adapters.trend_sniffing_adapter import TrendSniffingAdapter
 
 
 
@@ -298,19 +299,26 @@ def node_plan(state: Dict[str, Any], db: Optional[Session] = None) -> Dict[str, 
         "duration_ms": round((time.time() - t_strat) * 1000, 2),
     }
 
-    # 2. Content Planning Agent
+    # 2. Content Planning Agent (with live/radar trend sniffing)
     t_plan = time.time()
+    trend_sniffer = TrendSniffingAdapter()
+    trending_topics = trend_sniffer.sniff(niche=state.get("niche", "Tech & AI"), limit=3, use_network=False, db=db)
+
     plan = run_content_planning_agent(
         creator_id=creator_id,
         strategy=strategy,
         best_posting_window=best_window,
+        trending_topics=trending_topics,
         db=db,
     )
     msg_plan = {
         "agent_name": "content_planning_agent",
-        "action_taken": f"Scheduled 7-day calendar with {plan.get('planned_post_count')} posts",
+        "action_taken": f"Scheduled 7-day calendar with {plan.get('planned_post_count')} posts (injected {len(trending_topics)} trending angles)",
         "timestamp": utcnow().isoformat(),
-        "details": {"planned_post_count": plan.get("planned_post_count")},
+        "details": {
+            "planned_post_count": plan.get("planned_post_count"),
+            "trending_topics_injected": len(trending_topics),
+        },
         "duration_ms": round((time.time() - t_plan) * 1000, 2),
     }
 

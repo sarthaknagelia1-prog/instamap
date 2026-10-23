@@ -186,4 +186,18 @@ class Experiment(Base):
     creator = relationship("Creator", back_populates="experiments")
 
 
+class TrendingSignal(Base):
+    __tablename__ = "trending_signals"
 
+    id = Column(String, primary_key=True)  # UUID string
+    niche = Column(String, nullable=False, index=True)
+    topic = Column(String, nullable=False)
+    source = Column(String, nullable=False)  # reddit | google_trends | radar
+    velocity_score = Column(Float, default=50.0, nullable=False)
+    suggested_hook = Column(String, nullable=False)
+    suggested_angle = Column(String, nullable=False)
+    recommended_format = Column(String, default="reel", nullable=False)  # reel | carousel
+    metadata_json = Column(JSON, default=dict)
+
+    created_at = Column(DateTime, default=utcnow)
+    expires_at = Column(DateTime, nullable=True)

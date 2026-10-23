@@ -1,10 +1,10 @@
-﻿# Instagram Growth Engine (InstaMap)
+# Instagram Growth Engine (InstaMap)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Machine-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Tests Passing](https://img.shields.io/badge/tests-46%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-51%20passed-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An autonomous, data-driven intelligence and content planning system built specifically for creators, agencies, and social media strategists.
@@ -117,6 +117,7 @@ The PostgreSQL database houses 8 core relational tables:
 | `content_plans` | Weekly 7-day scheduled calendar items |
 | `content_drafts` | Drafted publishing packages with review status (`draft`, `approved`, `published`) |
 | `experiments` | A/B hypothesis tests, variant assignments, and statistical results |
+| `trending_signals` | Multi-source rising topics, velocity scores, and Instagram viral hooks |
 
 ---
 
@@ -211,6 +212,12 @@ All **46 tests** across all modules run in **~1.1s** with a 100% pass rate.
 - `GET /experiments/{id}` — View a single experiment
 - `POST /experiments/{id}/assign-posts` — Assign post IDs to Variant A and B
 - `POST /experiments/{id}/evaluate` — Evaluate Welch'\''s t-test and trigger feedback loop
+
+### Trend Sniffing & Viral Radar
+- `GET /trends/niches` — List supported niches and community radars
+- `GET /trends/sniff` — Live multi-source trend sniffing with velocity scoring & hook synthesis
+- `POST /trends/sniff/custom` — Sniff custom subreddits or keywords
+- `GET /trends/cached` — Retrieve active unexpired signals from PostgreSQL
 
 ---
 

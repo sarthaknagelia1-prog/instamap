@@ -19,6 +19,7 @@ def run_content_planning_agent(
     strategy: Dict[str, Any],
     best_posting_window: Optional[str] = None,
     week_number: int = 1,
+    trending_topics: Optional[List[Dict[str, Any]]] = None,
     db: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """
@@ -60,9 +61,11 @@ def run_content_planning_agent(
         },
         {
             "day": "Friday",
-            "content_type": primary_format,
+            "content_type": (trending_topics[0].get("recommended_format") if trending_topics else primary_format),
             "theme": p4,
-            "concept_angle": "Strong contrarian hook debunking a common myth in your niche",
+            "concept_angle": (trending_topics[0]["suggested_angle"] if trending_topics else "Strong contrarian hook debunking a common myth in your niche"),
+            "hook_preview": (trending_topics[0]["suggested_hook"] if trending_topics else None),
+            "trending_topic": (trending_topics[0]["topic"] if trending_topics else None),
             "scheduled_time": f"Friday {window.split()[-2] if ' ' in window else '19:00'} UTC",
             "target_metric": "Reach & Viral Discovery",
         },
