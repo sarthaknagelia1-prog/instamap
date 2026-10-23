@@ -21,16 +21,12 @@ class Settings:
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'growth_engine.db'}")
 
-    # LLM Settings
-    DEFAULT_LLM_PROVIDER: str = os.getenv("DEFAULT_LLM_PROVIDER", "groq").lower()
+    # LLM Settings (optional — system works fully offline without these)
+    DEFAULT_LLM_PROVIDER: str = os.getenv("DEFAULT_LLM_PROVIDER", "offline").lower()
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
-
-    # Instagram Graph API
-    IG_ACCESS_TOKEN: str = os.getenv("IG_ACCESS_TOKEN", "")
-    IG_USER_ID: str = os.getenv("IG_USER_ID", "")
 
     # Server Settings
     HOST: str = os.getenv("HOST", "0.0.0.0")
@@ -39,3 +35,4 @@ class Settings:
 
 
 settings = Settings()
+

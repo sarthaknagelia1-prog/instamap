@@ -14,19 +14,58 @@ from typing import Any, Dict, List
 
 # Canonical field -> list of known aliases seen across data sources.
 FIELD_ALIASES: Dict[str, List[str]] = {
-    "post_id": ["post_id", "id", "media_id", "postId"],
-    "creator_id": ["creator_id", "account_id", "user_id", "creatorId"],
-    "timestamp": ["timestamp", "created_at", "posted_at", "date", "publish_time"],
-    "content_type": ["content_type", "type", "media_type", "format"],
-    "likes_count": ["likes", "like_count", "likes_count", "num_likes"],
-    "comments_count": ["comments", "comment_count", "comments_count", "num_comments"],
-    "shares_count": ["shares", "share_count", "shares_count", "num_shares"],
-    "saves_count": ["saves", "save_count", "saves_count", "num_saves"],
-    "reach": ["reach", "impressions_reach", "unique_views"],
-    "impressions": ["impressions", "views", "video_views", "play_count"],
-    "caption_text": ["caption", "caption_text", "text", "description"],
-    "hashtags": ["hashtags", "tags", "hashtag_list"],
-    "watch_time_avg": ["avg_watch_time", "watch_time_avg", "average_watch_time"],
+    "post_id": [
+        "post_id", "id", "media_id", "postid", "mediaid", "post_url",
+        "url", "permalink", "link", "post link", "post id", "media id"
+    ],
+    "creator_id": [
+        "creator_id", "account_id", "user_id", "creatorid", "accountid",
+        "profile", "profile_name", "username", "account", "channel"
+    ],
+    "timestamp": [
+        "timestamp", "created_at", "posted_at", "date", "publish_time",
+        "publish date", "published date", "published at", "created time",
+        "time", "date (gmt)", "post date", "creation date"
+    ],
+    "content_type": [
+        "content_type", "type", "media_type", "format", "post_type",
+        "post type", "content type", "media type", "format type"
+    ],
+    "likes_count": [
+        "likes", "like_count", "likes_count", "num_likes", "reactions",
+        "favorites", "like", "number of likes"
+    ],
+    "comments_count": [
+        "comments", "comment_count", "comments_count", "num_comments",
+        "replies", "comment", "number of comments"
+    ],
+    "shares_count": [
+        "shares", "share_count", "shares_count", "num_shares", "retweets/shares",
+        "reposts", "forward_count", "share", "number of shares"
+    ],
+    "saves_count": [
+        "saves", "save_count", "saves_count", "num_saves", "bookmarks",
+        "saved", "save", "number of saves"
+    ],
+    "reach": [
+        "reach", "impressions_reach", "unique_views", "accounts reached",
+        "lifetime post total reach", "total reach", "unique reach", "post reach"
+    ],
+    "impressions": [
+        "impressions", "views", "video_views", "play_count", "total impressions",
+        "lifetime post total impressions", "plays", "post impressions"
+    ],
+    "caption_text": [
+        "caption", "caption_text", "text", "description", "message",
+        "post text", "content", "copy", "title"
+    ],
+    "hashtags": [
+        "hashtags", "tags", "hashtag_list", "tag_list", "keywords"
+    ],
+    "watch_time_avg": [
+        "avg_watch_time", "watch_time_avg", "average_watch_time",
+        "watch time", "avg view duration", "retention"
+    ],
 }
 
 # Fields the system needs at minimum to run performance analysis.
@@ -51,11 +90,34 @@ OPTIONAL_FEATURES = [
 
 # Content-type strings normalized to a fixed vocabulary.
 CONTENT_TYPE_NORMALIZATION = {
-    "reel": "reel", "reels": "reel", "video": "reel", "clip": "reel",
-    "carousel": "carousel", "carousel_album": "carousel", "album": "carousel",
-    "image": "image", "photo": "image", "post": "image", "static": "image",
+    "reel": "reel", "reels": "reel", "video": "reel", "clip": "reel", "short": "reel",
+    "carousel": "carousel", "carousel_album": "carousel", "album": "carousel", "slideshow": "carousel",
+    "image": "image", "photo": "image", "post": "image", "static": "image", "picture": "image",
     "story": "story", "stories": "story",
 }
+
+
+def detect_source_platform(headers: List[str]) -> str:
+    """
+    Infers the origin tool/platform from the header names in the export.
+    Useful for audit logs and source-specific handling.
+    """
+    lowered = {h.strip().lower() for h in headers}
+
+    if any("lifetime post total" in h for h in lowered):
+        return "sprout_social"
+    if any("date (gmt)" in h or "total impressions" in h for h in lowered):
+        return "hootsuite"
+    if any("accounts reached" in h or "publish time" in h for h in lowered):
+        return "meta_business_suite"
+    if any("permalink" in h for h in lowered) and any("reactions" in h for h in lowered):
+        return "later"
+    if any("metricool" in h for h in lowered):
+        return "metricool"
+
+    return "generic_csv_or_table"
+
+
 
 
 def _build_reverse_lookup() -> Dict[str, str]:
