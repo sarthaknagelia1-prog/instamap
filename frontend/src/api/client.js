@@ -92,12 +92,16 @@ export const api = {
   checkDataReadiness: (formDataOrJson, isFormData = false) => post('/data-readiness', formDataOrJson, isFormData),
   ingestData: (formDataOrJson, isFormData = false) => post('/data/ingest', formDataOrJson, isFormData),
   ingestPaste: (payload) => post('/data/ingest/paste', payload),
+  ingestMetaAccount: (payload) => post('/data/ingest/meta-account', payload),
 
   // Analytics
   getAnalyticsSummary: (creatorId) => get('/analytics/summary', { creator_id: creatorId }),
   getAnalyticsPerformance: (creatorId) => get(`/analytics/performance/${encodeURIComponent(creatorId)}`),
   getAnalyticsTimeSeries: (creatorId, limit = 50) => get('/analytics/time-series', { creator_id: creatorId, limit }),
   analyzePerformance: (creatorId, limit = 100) => post('/analyze-performance', { creator_id: creatorId, limit }),
+  predictVirality: (payload) => post('/analytics/predict-virality', payload),
+  simulateGrowth: (payload) => post('/analytics/simulation/growth', payload),
+  simulatePost: (payload) => post('/analytics/simulation/post', payload),
 
   // Multi-Agent Orchestrator
   runOrchestrator: (creatorId, trigger = 'manual') => post('/creator-plan', { creator_id: creatorId, trigger_event: trigger }),

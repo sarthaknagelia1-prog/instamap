@@ -22,6 +22,7 @@ from backend.security import get_current_user, User
 from backend.data.adapters.csv_adapter import CSVAdapter
 from backend.data.adapters.json_adapter import JSONAdapter
 from backend.data.adapters.paste_adapter import PasteAdapter
+from backend.data.adapters.meta_adapter import MetaAdapter
 from backend.data.schema_mapper import detect_source_platform
 from backend.data.ingestion.data_readiness_agent import run as run_data_readiness
 from backend.data.ingestion.ingest import run_ingestion
@@ -61,6 +62,14 @@ class IngestPastePayload(BaseModel):
         if len(v.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
             raise ValueError("Pasted text exceeds maximum permitted size.")
         return v
+
+
+class MetaAccountIngestPayload(BaseModel):
+    creator_id: str = Field(..., description="Unique identifier for the creator")
+    access_token: str = Field(..., description="Meta Graph User/Page Access Token")
+    ig_user_id: Optional[str] = Field(None, description="Instagram Business/Creator Account ID (auto-discovered if omitted)")
+    limit: int = Field(50, ge=1, le=500, description="Max posts to retrieve from Meta Graph API")
+    quality_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Minimum quality score threshold")
 
 
 class ReadinessResponse(BaseModel):
@@ -106,7 +115,9 @@ async def _parse_upload_file(file: UploadFile) -> List[Dict[str, Any]]:
 
     filename = (file.filename or "").lower()
     try:
-        if filename.endswith(".json"):
+        if "meta" in filename or "instagram" in filename or "posts_" in filename:
+            records = MetaAdapter.parse_meta_export_archive(text_content, filename=filename)
+        elif filename.endswith(".json"):
             adapter = JSONAdapter()
             records = adapter.fetch(content=text_content)
         else:
@@ -154,13 +165,17 @@ def get_supported_sources():
     """Returns documentation on supported export tools and formats."""
     return {
         "supported_input_methods": [
+            "Meta Account Direct Sync (POST /data/ingest/meta-account with user token)",
             "CSV / TSV file upload (POST /data/ingest with form key 'file')",
+            "Meta Data Download Archive (POST /data/ingest with official posts_1.json or Meta Business Suite CSV)",
             "JSON file upload (POST /data/ingest with .json file)",
             "Direct JSON API payload (POST /data/ingest with application/json)",
             "Spreadsheet copy-paste (POST /data/ingest/paste with tab-separated or markdown text)",
         ],
         "compatible_platforms": [
-            {"name": "Instagram Professional Dashboard / Meta Business Suite", "formats": ["CSV", "XLSX export"]},
+            {"name": "Meta Graph API (Direct Account Sync)", "formats": ["User Access Token / Page Token"]},
+            {"name": "Instagram Data Download Archive", "formats": ["posts_1.json", "content.json"]},
+            {"name": "Meta Business Suite / Creator Studio", "formats": ["CSV", "XLSX export"]},
             {"name": "Metricool", "formats": ["CSV export"]},
             {"name": "Later", "formats": ["CSV export"]},
             {"name": "Hootsuite", "formats": ["CSV", "Excel export"]},
@@ -372,4 +387,54 @@ def ingest_pasted_data(
         invalidate_analytics_cache(payload.creator_id)
 
     return result
+
+
+@router.post("/data/ingest/meta-account", response_model=IngestResponse)
+def ingest_from_meta_account(
+    payload: MetaAccountIngestPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Directly connects to creator's own Instagram account via Meta Graph API
+    using a creator-provided User/Page Access Token.
+    Auto-discovers the connected Instagram Business account and pulls media + insights.
+    """
+    existing_creator = db.get(Creator, payload.creator_id)
+    if existing_creator and not current_user.can_access_creator(existing_creator.id, existing_creator.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to ingest data for this creator.",
+        )
+
+    try:
+        adapter = MetaAdapter(access_token=payload.access_token, ig_user_id=payload.ig_user_id)
+        records = adapter.fetch_account_posts(limit=payload.limit)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Meta Graph API error: {str(e)}",
+        )
+
+    if not records:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No media posts found on the specified Instagram account.",
+        )
+
+    result = run_ingestion(
+        session_or_factory=db,
+        creator_id=payload.creator_id,
+        source="meta_graph_api",
+        raw_data=records,
+        quality_threshold=payload.quality_threshold,
+        workspace_id=current_user.workspace_id,
+    )
+    if result.get("data_ready"):
+        invalidate_analytics_cache(payload.creator_id)
+
+    return result
+
 

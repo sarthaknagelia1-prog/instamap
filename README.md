@@ -7,11 +7,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Machine-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Tests Passing](https://img.shields.io/badge/tests-74%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-87%20passed-brightgreen.svg)]()
 [![Security Hardened](https://img.shields.io/badge/security-hardened-success.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An autonomous, data-driven creator intelligence, performance analytics, and content planning platform built for modern creators, agencies, and social media strategists.
+An autonomous, data-driven creator intelligence, predictive virality modeling, growth simulation, and content planning platform built for modern creators, agencies, and social media strategists.
 
 ---
 
@@ -20,14 +20,16 @@ An autonomous, data-driven creator intelligence, performance analytics, and cont
 - [The Vision: Zero Meta API Dependency](#the-vision-zero-meta-api-dependency)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
-  - [1. Multi-Source Ingestion & Smart Schema Normalizer](#1-multi-source-ingestion--smart-schema-normalizer)
-  - [2. Deterministic Performance Intelligence](#2-deterministic-performance-intelligence)
-  - [3. Autonomous Strategy & Planning (LangGraph)](#3-autonomous-strategy--planning-langgraph)
-  - [4. Welch's t-Test Experiment Engine](#4-welchs-t-test-experiment-engine)
-  - [5. Viral Trend Radar & Signal Sniffer](#5-viral-trend-radar--signal-sniffer)
-  - [6. Human-in-the-Loop Review & Approval Queue](#6-human-in-the-loop-review--approval-queue)
-  - [7. Interactive Advisory Engine (Chatbot)](#7-interactive-advisory-engine-chatbot)
-  - [8. Modern React Dynamic SaaS Interface](#8-modern-react-dynamic-saas-interface)
+  - [1. Multi-Source Ingestion & Meta Account Adapter](#1-multi-source-ingestion--meta-account-adapter)
+  - [2. Virality ML & Predictive Analytics Layer](#2-virality-ml--predictive-analytics-layer)
+  - [3. Growth & Content Simulation Studio (Monte Carlo)](#3-growth--content-simulation-studio-monte-carlo)
+  - [4. Deterministic Performance Intelligence](#4-deterministic-performance-intelligence)
+  - [5. Autonomous Strategy & Planning (LangGraph)](#5-autonomous-strategy--planning-langgraph)
+  - [6. Welch's t-Test Experiment Engine](#6-welchs-t-test-experiment-engine)
+  - [7. Viral Trend Radar & Signal Sniffer](#7-viral-trend-radar--signal-sniffer)
+  - [8. Human-in-the-Loop Review & Approval Queue](#8-human-in-the-loop-review--approval-queue)
+  - [9. Interactive Advisory Engine (Chatbot)](#9-interactive-advisory-engine-chatbot)
+  - [10. Modern React Dynamic SaaS Interface](#10-modern-react-dynamic-saas-interface)
 - [Enterprise Security & Multitenancy](#enterprise-security--multitenancy)
 - [Database Schema (PostgreSQL `instaDB`)](#database-schema-postgresql-instadb)
 - [Project Directory Layout](#project-directory-layout)
@@ -45,16 +47,13 @@ An autonomous, data-driven creator intelligence, performance analytics, and cont
 
 ## The Vision: Zero Meta API Dependency
 
-Traditional creator analytics and management tools rely directly on Meta's official Graph API, which suffers from:
-- Fragile user access tokens that expire frequently and disrupt background jobs.
-- Aggressive API rate-limiting and opaque quota throttling.
-- Onerous app verification requirements and permissions audits.
-- Constant risks of account flags, shadowbans, or accidental terms-of-service violations.
+Traditional creator analytics and management tools rely directly on fragile token management and unvetted third-party integrations, resulting in token expiration outages, quota throttling, and account shadowbans.
 
-**Instagram Growth Engine (InstaMap)** operates on an **Offline-First, Zero-API-Dependency Architecture**:
-- **Creator-Owned Data Ingestion**: Seamlessly ingest data from exports provided by **Meta Business Suite**, **Metricool**, **Later**, **Hootsuite**, and **Sprout Social** in CSV, TSV, JSON, or direct clipboard copy/paste.
-- **Deterministic Local Intelligence**: Metrics, engagement rates, week-over-week momentum, z-score anomaly detection, and statistical significance testing execute locally using deterministic mathematical models without external API calls.
-- **Optional LLM Creative Acceleration**: Deep copywriting ideation and hypothesis generation can be optionally augmented with Groq LLM inference, with graceful fallback to deterministic heuristic generators when offline or unconfigured.
+**Instagram Growth Engine (InstaMap)** operates on a flexible, creator-first architecture:
+- **Direct Meta Account Sync**: Creators can safely connect their own Instagram account using their personal User/Page Access Token via `MetaAdapter` to pull real media posts and insights (reach, impressions, saves, shares).
+- **Creator-Owned Data Ingestion**: Seamlessly ingest data from exports provided by **Meta Business Suite**, **Instagram Privacy Download Archives** (`posts_1.json`, `content.json`), **Metricool**, **Later**, **Hootsuite**, and **Sprout Social** in CSV, TSV, JSON, or direct clipboard copy/paste.
+- **Deterministic Local Intelligence & Virality ML**: Predictive scoring, engagement rates, week-over-week momentum, z-score anomaly detection, and statistical significance testing execute locally without external API dependencies.
+- **Monte Carlo Growth Simulation**: Project future 30, 60, and 90-day audience and reach trajectories under Baseline, Recommended, and Aggressive scenarios with realistic stochastic variance.
 - **Complete Manual Publishing Packages**: Generates rich creator-ready publishing specifications (Hook $\rightarrow$ Body $\rightarrow$ CTA, hashtag strategy, visual pacing notes, audio recommendations) for compliant manual publishing.
 
 ---
@@ -62,11 +61,12 @@ Traditional creator analytics and management tools rely directly on Meta's offic
 ## System Architecture
 
 ```
-                 Creator Export (CSV / TSV / JSON / Clipboard)
+        Direct Meta Graph API  OR  Creator Export (CSV / JSON / Clipboard)
                                        │
                                        ▼
         ┌─────────────────────────────────────────────────────────────┐
-        │                 Data Readiness & Ingestion                  │
+        │                 Data Readiness & Meta Adapter               │
+        │   • Meta Graph API Sync        • Official Meta JSON/CSV     │
         │   • 40+ Header Aliases         • ISO-8601 Timestamp Normal  │
         │   • Quality Scoring (0.0-1.0)   • Deduplication & Sanitizing │
         └──────────────────────────────┬──────────────────────────────┘
@@ -82,10 +82,10 @@ Traditional creator analytics and management tools rely directly on Meta's offic
                 │                              │
                 ▼                              ▼
    ┌─────────────────────────┐   ┌────────────────────────────────────┐
-   │   Performance Engine    │   │         Experiment Engine          │
-   │ • Engagement & Saves    │   │ • Welch's Two-Sample t-test        │
-   │ • WoW Momentum Delta    │   │ • Significance Evaluator (p<0.05)  │
-   │ • Rolling Z-score Spike │   │ • Strategy Memory Feedback Loop    │
+   │     Virality ML Layer   │   │     Monte Carlo Simulation Studio  │
+   │ • 5-Factor Score (0-100)│   │ • 30/60/90-Day Growth Scenarios    │
+   │ • Hook Strength Triggers│   │ • 500-Draw Single-Post Distributions│
+   │ • Reach Multiplier Range│   │ • Breakout Probability Confidence  │
    └────────────┬────────────┘   └────────────────────────────────────┘
                 │                                  ▲
                 ▼                                  │
@@ -113,8 +113,8 @@ Traditional creator analytics and management tools rely directly on Meta's offic
    ┌──────────────────────────────────────────────────────────────────┐
    │           Interactive React 18 + Tailwind SaaS Frontend          │
    │   • Unified Dashboard • Analytics Workspace • Content Calendar   │
-   │   • Draft Studio      • Experiments Matrix  • Trend Radar        │
-   │   • Approval Queue    • Advisory Chatbot Drawer                  │
+   │   • Virality ML Studio• Simulation Studio   • Trend Radar        │
+   │   • Draft Studio      • Experiments Lab     • Approval Queue     │
    └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -122,59 +122,75 @@ Traditional creator analytics and management tools rely directly on Meta's offic
 
 ## Key Features
 
-### 1. Multi-Source Ingestion & Smart Schema Normalizer
-- **Sniffer & Delimiter Detection**: Dynamically parses commas, tabs, semicolons, and diverse encodings.
-- **Unstructured / Tabular Clipboard Paste**: Parses raw spreadsheets copied directly from Google Sheets, Microsoft Excel, or GitHub Markdown tables.
-- **40+ Header Aliases**: Automatically maps diverse export headers (`likes`, `favorite_count`, `Engagements`, `Reach`, `Saves`, `impressions`) into unified schema fields.
+### 1. Multi-Source Ingestion & Meta Account Adapter
+- **Direct Meta Account Sync**: Enables creators to provide their Meta User/Page Access Token to auto-discover their connected Instagram Business/Creator account and ingest historical media posts with insights (`reach`, `impressions`, `saves`, `shares`, `likes`, `comments`).
+- **Official Meta Export Parsers**: Natively detects and ingests Meta Business Suite CSV files and Instagram "Download Your Information" JSON packages (`posts_1.json`, `content.json`).
+- **Sniffer & Delimiter Detection**: Dynamically parses commas, tabs, semicolons, and diverse character encodings.
+- **Unstructured Clipboard Paste**: Parses raw spreadsheets copied directly from Google Sheets, Microsoft Excel, or GitHub Markdown tables.
 - **Data Readiness Quality Scoring**: Computes a deterministic $0.0 - 1.0$ data readiness score, identifying duplicate post IDs, missing metrics, and malformed timestamps before persisting.
 
-### 2. Deterministic Performance Intelligence
+### 2. Virality ML & Predictive Analytics Layer
+Evaluates candidate posts across 5 deterministic analytical dimensions:
+1. **Hook Strength & Cognitive Triggers (0–25 pts)**: Word count sweet spot (5–11 words), psychological curiosity gap ("secret", "why most", "stop making"), numerical structure ("3 mistakes", "5 tools"), and high-arousal verbs ("scale", "transform", "skyrocket").
+2. **Format Discovery Affinity (0–20 pts)**: Rewards formats with high organic discovery (Reels) and repeat retention (Carousels) weighted against the creator's historical benchmark.
+3. **Peak Timing Match (0–20 pts)**: Compares planned posting time against the creator's historical peak engagement window.
+4. **Saveability & Shareability (0–20 pts)**: Analyzes caption value density, listicle formatting, and explicit Save/Share call-to-actions.
+5. **Trend Radar Overlap (0–15 pts)**: Calculates keyword overlap with active rising viral signals.
+- **Outputs**: Score (0–100), Tier (`Breakout Potential 🚀`, `High Potential 🔥`, `Moderate 📈`, `Niche ⚠️`), Predicted Reach Multiplier ($0.6\times$ to $3.5\times$), estimated reach range grounded in actual creator history, and top actionable recommendations.
+
+### 3. Growth & Content Simulation Studio (Monte Carlo)
+- **30/60/90-Day Trajectory Modeling**:
+  - Compares **Baseline** (current cadence and format mix), **Recommended** (60/30/10 format allocation, peak timing, optimized hooks), and **Aggressive** (1.8x cadence, viral trend sprint).
+  - Runs 100 stochastic iterations with realistic log-normal variance to generate 10th (conservative), 50th (median expected), and 90th (breakout upside) confidence intervals.
+  - Generates daily milestone timelines, projected cumulative reach, and estimated net follower conversions.
+- **Single-Post What-If Reach Simulator**:
+  - Simulates 500 draws based on creator reach variance shifted by the Virality ML score.
+  - Generates percentile distributions ($p_{10}, p_{25}, p_{50}, p_{75}, p_{90}, p_{99}$), breakout probabilities, and stochastic frequency histogram bins.
+
+### 4. Deterministic Performance Intelligence
 - **Core Engagement Metrics**: Calculates engagement rates, save rates, share rates, and reach efficiency.
 - **Week-over-Week Momentum**: Computes percentage deltas and classifies velocity as `improving`, `declining`, or `stable`.
 - **Peak Posting Windows**: Analyzes historical interactions to determine the top day-of-week and time-of-day slots.
 - **Z-Score Anomaly Detection**: Flags viral breakout posts and unexpected performance dips using rolling statistical z-scores.
 - **Sub-Millisecond Dashboard Caching**: In-memory TTL caching on analytical summaries for instant UI responsiveness.
 
-### 3. Autonomous Strategy & Planning (LangGraph)
+### 5. Autonomous Strategy & Planning (LangGraph)
 - **Multi-Agent State Machine**: Deterministically orchestrates state transitions:
   $$\text{fetch\_context} \longrightarrow \text{analyze} \longrightarrow \text{decide} \longrightarrow (\text{generate\_plan} \mid \text{report\_only} \mid \text{request\_more\_data})$$
-- **Adaptive Strategy Allocation**: Recommends format ratios (e.g., 60% Reels, 30% Carousels, 10% Static Posts) and defines 4 strategic content pillars.
+- **Adaptive Strategy Allocation**: Recommends format ratios (60% Reels, 30% Carousels, 10% Static Posts) and defines 4 strategic content pillars.
 - **7-Day Scheduled Calendar**: Generates scheduling slots aligned with historical peak interaction windows.
-- **Publishing Package Studio**: Produces complete publishing packages:
-  - **Hook**: Scroll-stopping first 3 seconds / headline.
-  - **Body Copy**: Value delivery structured for retention.
-  - **Call to Action (CTA)**: High-conversion save/share prompts.
-  - **Ranked Hashtags**: Targeted niche tags.
-  - **Visual & Audio Direction**: Scene-by-scene camera directions and trending audio suggestions.
+- **Publishing Package Studio**: Produces complete publishing packages (Hook, Body Copy, CTA, Ranked Hashtags, Visual & Audio Direction).
 
-### 4. Welch's t-Test Experiment Engine
+### 6. Welch's t-Test Experiment Engine
 - **Unequal Variance Testing**: Compares metric distributions between Variant A and Variant B without assuming equal variance.
-- **Pure-Python Significance**: Evaluates two-tailed $p$-values via the Abramowitz & Stegun approximation with `math.erfc` in standard Python (zero dependency on heavy libraries like `scipy`).
+- **Pure-Python Significance**: Evaluates two-tailed $p$-values via the Abramowitz & Stegun approximation with `math.erfc` in standard Python.
 - **Sample Size Safeguards**: Enforces $N \ge 3$ posts per variant to prevent premature conclusions.
 - **Strategy Feedback Loop**: When an A/B test reaches statistical significance ($p < 0.05$), the winning hypothesis is automatically incorporated into the creator's active `Strategy.strategic_priorities`.
 
-### 5. Viral Trend Radar & Signal Sniffer
+### 7. Viral Trend Radar & Signal Sniffer
 - **Multi-Source Trend Discovery**: Scans community discussions, viral topics, and rising signals.
 - **Velocity & Relevance Scoring**: Ranks signals based on freshness and niche relevance.
 - **Instagram Viral Hook Synthesis**: Converts raw trending signals into ready-to-use hooks for Reels and Carousels.
 
-### 6. Human-in-the-Loop Review & Approval Queue
+### 8. Human-in-the-Loop Review & Approval Queue
 - **State Transition Enforcement**: Strict lifecycle progression (`draft` $\rightarrow$ `approved` $\rightarrow$ `published` or `rejected` / `revision_requested`).
 - **Concurrency & Re-decision Protection**: Prevents duplicate decisions and race conditions via HTTP 409 Conflict safeguards.
 - **Audit Logging**: Captures reviewer identity, timestamps, and feedback notes for full operational governance.
 
-### 7. Interactive Advisory Engine (Chatbot)
+### 9. Interactive Advisory Engine (Chatbot)
 - **Contextual Growth Advisor**: Floating, responsive slide-out drawer accessible across all views.
 - **Actionable Advice**: Provides instant guidance on content hooks, format selection, posting times, and strategy adjustments.
 - **Safe Rendering**: All assistant and user messages are strictly sanitized against XSS before DOM insertion.
 
-### 8. Modern React Dynamic SaaS Interface
+### 10. Modern React Dynamic SaaS Interface
 - **Modern Clean Design**: Data-dense, professional dashboard built with React 18, Vite, and Tailwind CSS.
 - **Multi-View Navigation**:
   - `Overview`: High-level metrics, peak windows, performance trends, recent drafts, fast data readiness preview.
   - `Creators`: Multi-creator workspace registry and switcher with tenant scoping.
-  - `Data Import`: File dropzone, clipboard paste tab, validation preview, and CSV template download.
+  - `Data Import`: File dropzone, Direct Meta Account Sync, clipboard paste tab, and CSV template download.
   - `Analytics`: Engagement time-series charts, WoW momentum, anomaly callouts, and sortable post history.
+  - `Virality ML Predictor`: Interactive 5-factor virality score gauge, reach multiplier, and actionable recommendations.
+  - `Simulation Studio`: 30-90 day Monte Carlo growth forecasting and What-If post reach distributions.
   - `Strategy`: Content pillar cards, format breakdown meters, and cadence goals.
   - `Calendar`: Weekly scheduled content planner with status badges.
   - `Draft Studio`: Publishing package viewer with 1-click clipboard copy and manual publishing flow.
@@ -234,24 +250,26 @@ instagram-growth-engine/
 │   │   ├── content_planning_agent.py  # 7-day calendar scheduler
 │   │   ├── data_readiness_agent.py    # Quality scorer & header alias resolver
 │   │   └── strategy_agent.py          # 60/30/10 format & pillar generator
-│   ├── analytics/                     # Deterministic metrics & statistics
+│   ├── analytics/                     # Deterministic metrics, Virality ML & Simulation
 │   │   ├── anomalies.py               # Rolling z-score anomaly detector
 │   │   ├── metrics.py                 # Engagement, save, and share math
-│   │   └── windows.py                 # Historical peak posting window calculator
+│   │   ├── simulation.py              # Monte Carlo growth & post reach simulator
+│   │   ├── trends.py                  # Rolling trends & optimal posting windows
+│   │   └── virality.py                # 5-factor Virality ML predictive scoring engine
 │   ├── api/                           # FastAPI route handlers
 │   │   ├── routes_advisory.py         # Advisory chatbot endpoints
-│   │   ├── routes_analytics.py        # Analytics summary & time series
+│   │   ├── routes_analytics.py        # Summary, time series, virality ML, simulation
 │   │   ├── routes_approvals.py        # Review & approval queue operations
 │   │   ├── routes_content.py          # Strategy, calendar, and draft routes
 │   │   ├── routes_creators.py         # Creator profile & post history
 │   │   ├── routes_experiments.py      # A/B test proposal & evaluation
-│   │   ├── routes_ingest.py           # Multi-source ingestion & templates
+│   │   ├── routes_ingest.py           # File upload, paste, and Meta account sync
 │   │   ├── routes_orchestrator.py     # LangGraph workflow triggering
 │   │   ├── routes_reports.py          # HTML/JSON weekly report generation
 │   │   └── routes_trends.py           # Trend sniffing & cached signals
 │   ├── data/                          # Ingestion & normalization adapters
-│   │   ├── adapters/                  # Meta, Metricool, Later, Hootsuite parsers
-│   │   └── ingestion/                 # Sniffer & tabular paste processor
+│   │   ├── adapters/                  # Meta Graph & Export, CSV, JSON, Paste parsers
+│   │   └── ingestion/                 # Sniffer & data readiness validation pipeline
 │   ├── database/                      # SQLAlchemy models & database sessions
 │   │   ├── models.py                  # PostgreSQL tables
 │   │   └── session.py                 # Engine, session factory & connection pooling
@@ -272,17 +290,20 @@ instagram-growth-engine/
 │   │   ├── api/
 │   │   │   └── client.js              # Centralized Axios API client
 │   │   ├── components/
+│   │   │   ├── shell/                 # App frame components (Sidebar, TopNav, Toasts)
 │   │   │   ├── views/                 # Core view components
 │   │   │   │   ├── AdvisoryDrawer.jsx # Slide-out AI advisory drawer
 │   │   │   │   ├── AnalyticsView.jsx  # Charts, WoW trends, anomalies
 │   │   │   │   ├── ApprovalsView.jsx  # Approval queue with decision actions
 │   │   │   │   ├── CalendarView.jsx   # 7-day scheduled calendar grid
 │   │   │   │   ├── CreatorsView.jsx   # Creator registry & workspace switcher
-│   │   │   │   ├── DataImportView.jsx # File upload & clipboard paste
+│   │   │   │   ├── DataImportView.jsx # File upload, Meta account sync, clipboard paste
 │   │   │   │   ├── DraftStudioView.jsx# Publishing packages & manual publisher
 │   │   │   │   ├── ExperimentsView.jsx# A/B tests & statistical evaluators
 │   │   │   │   ├── OverviewDashboard.jsx # High-level KPI summary cards
-│   │   │   │   └── TrendRadarView.jsx # Viral trend signals & hooks
+│   │   │   │   ├── SimulationStudioView.jsx # Monte Carlo simulation studio
+│   │   │   │   ├── TrendRadarView.jsx # Viral trend signals & hooks
+│   │   │   │   └── ViralityPredictorView.jsx # 5-factor virality score gauge & optimizer
 │   │   │   ├── AdvisoryChatbot.jsx    # Sanitized chat component
 │   │   │   ├── AppHeader.jsx          # Top navigation & creator selector
 │   │   │   └── Sidebar.jsx            # Desktop & responsive mobile sidebar
@@ -292,7 +313,7 @@ instagram-growth-engine/
 │   ├── package.json                   # Frontend dependencies
 │   ├── tailwind.config.js             # Tailwind CSS configuration
 │   └── vite.config.js                 # Vite bundler configuration
-├── tests/                             # Comprehensive test suite (74 tests)
+├── tests/                             # Comprehensive test suite (87 tests)
 │   ├── test_advisory.py
 │   ├── test_analytics.py
 │   ├── test_api_ingest.py
@@ -300,6 +321,7 @@ instagram-growth-engine/
 │   ├── test_creators_and_analytics.py
 │   ├── test_data_readiness.py
 │   ├── test_experiments.py
+│   ├── test_meta_adapter.py           # Meta Graph & export archive tests
 │   ├── test_multi_source_adapters.py
 │   ├── test_orchestrator.py
 │   ├── test_reporting_and_ui.py
@@ -308,8 +330,10 @@ instagram-growth-engine/
 │   ├── test_security_auth.py
 │   ├── test_security_limits.py
 │   ├── test_security_xss.py
+│   ├── test_simulation.py             # Growth & post simulation tests
 │   ├── test_strategy_and_content.py
-│   └── test_trend_sniffer.py
+│   ├── test_trend_sniffer.py
+│   └── test_virality.py               # Virality ML predictive scoring tests
 ├── requirements.txt                   # Backend Python dependencies
 ├── SECURITY_REMEDIATION_PLAN.md       # Complete security audit & verification log
 └── README.md                          # Comprehensive project documentation
@@ -374,13 +398,6 @@ Once running:
 - **Interactive Swagger API Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **ReDoc API Documentation**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
-*(Optional) If doing active frontend development with Hot Module Replacement (HMR):*
-```bash
-cd frontend
-npm run dev
-# Vite dev server runs at http://localhost:5173
-```
-
 ---
 
 ### 4. Environment Configuration (`.env`)
@@ -407,7 +424,7 @@ GROQ_API_KEY=your_groq_api_key_here
 
 ## Automated Testing Suite
 
-The repository includes **74 comprehensive automated tests** validating data ingestion, mathematical models, LangGraph orchestration, statistical evaluation, security authorization, and approval workflows.
+The repository includes **87 comprehensive automated tests** validating data ingestion, Meta account adapters, mathematical models, Virality ML scoring, Monte Carlo growth simulations, LangGraph orchestration, statistical evaluation, security authorization, and approval workflows.
 
 To run the full test suite:
 ```bash
@@ -418,27 +435,30 @@ Expected output:
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0
-collected 74 items
+collected 87 items
 
-tests/test_advisory.py ....                                              [  5%]
-tests/test_analytics.py .......                                          [ 14%]
-tests/test_api_ingest.py .....                                           [ 21%]
-tests/test_approvals.py ......                                           [ 29%]
-tests/test_creators_and_analytics.py ..                                  [ 32%]
-tests/test_data_readiness.py .....                                       [ 39%]
-tests/test_experiments.py ......                                         [ 47%]
-tests/test_multi_source_adapters.py .......                              [ 56%]
-tests/test_orchestrator.py .....                                         [ 63%]
-tests/test_reporting_and_ui.py ....                                      [ 68%]
-tests/test_schema_mapper.py ....                                         [ 74%]
-tests/test_security_approvals.py ..                                      [ 77%]
-tests/test_security_auth.py ...                                          [ 81%]
-tests/test_security_limits.py ...                                        [ 85%]
-tests/test_security_xss.py .                                             [ 86%]
-tests/test_strategy_and_content.py .....                                 [ 93%]
-tests/test_trend_sniffer.py .....                                        [100%]
+tests/test_advisory.py ....                                              [  4%]
+tests/test_analytics.py .......                                          [ 12%]
+tests/test_api_ingest.py .....                                           [ 18%]
+tests/test_approvals.py ......                                           [ 25%]
+tests/test_creators_and_analytics.py ..                                  [ 27%]
+tests/test_data_readiness.py .....                                       [ 33%]
+tests/test_experiments.py ......                                         [ 40%]
+tests/test_meta_adapter.py ....                                          [ 44%]
+tests/test_multi_source_adapters.py .......                              [ 52%]
+tests/test_orchestrator.py .....                                         [ 58%]
+tests/test_reporting_and_ui.py ....                                      [ 63%]
+tests/test_schema_mapper.py ....                                         [ 67%]
+tests/test_security_approvals.py ..                                      [ 70%]
+tests/test_security_auth.py ...                                          [ 73%]
+tests/test_security_limits.py ...                                        [ 77%]
+tests/test_security_xss.py .                                             [ 78%]
+tests/test_simulation.py ...                                             [ 81%]
+tests/test_strategy_and_content.py .....                                 [ 87%]
+tests/test_trend_sniffer.py .....                                        [ 93%]
+tests/test_virality.py ......                                            [100%]
 
-============================= 74 passed in 12.98s =============================
+============================= 87 passed in 10.11s =============================
 ```
 
 ---
@@ -449,13 +469,14 @@ tests/test_trend_sniffer.py .....                                        [100%]
 - `GET /health` — Check system health and database connectivity (sanitized against information leakage).
 
 ### Data & Ingestion
-- `GET /data/sources` — List supported platforms (`meta`, `metricool`, `later`, `hootsuite`, `sprout_social`).
+- `GET /data/sources` — List supported platforms (`meta_graph_api`, `meta_export`, `metricool`, `later`, `hootsuite`, `sprout_social`).
 - `GET /data/csv-template` — Download the standard CSV ingestion template.
 - `POST /data-readiness` — Preview and calculate dataset readiness score ($0.0 - 1.0$) without saving.
 - `POST /data/ingest` — Ingest CSV, TSV, or JSON file export (with 10MB limit and 5,000 row cap).
 - `POST /data/ingest/paste` — Ingest raw tabular text from clipboard (with 5MB limit).
+- `POST /data/ingest/meta-account` — Ingest live account posts & insights directly from Meta Graph API using creator User/Page token.
 
-### Creators & Analytics
+### Creators, Analytics, Virality ML & Simulation
 - `GET /creators` — List registered creators in current workspace.
 - `POST /creators` — Register a new creator profile.
 - `GET /creators/{creator_id}` — Get creator metadata, post counts, and active workspace.
@@ -463,6 +484,9 @@ tests/test_trend_sniffer.py .....                                        [100%]
 - `POST /analyze-performance` — Run full analytical evaluation (rates, velocity, anomalies).
 - `GET /analytics/summary` — Fast cached summary of engagement and momentum.
 - `GET /analytics/time-series` — Historical time-series metrics formatted for charting.
+- `POST /analytics/predict-virality` — Compute 5-factor virality score (0-100), tier, reach multiplier, and recommendations.
+- `POST /analytics/simulation/growth` — Run 30/60/90-day Monte Carlo growth trajectory simulations across scenarios.
+- `POST /analytics/simulation/post` — Run 500 stochastic draws to project single-post reach distribution and breakout odds.
 
 ### Strategy & Content Workflow
 - `POST /strategy/generate` — Generate strategic pillars and format allocation (60/30/10).

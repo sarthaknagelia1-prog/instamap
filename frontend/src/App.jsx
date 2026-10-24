@@ -8,6 +8,8 @@ import OverviewDashboard from './components/views/OverviewDashboard';
 import CreatorsView from './components/views/CreatorsView';
 import DataImportView from './components/views/DataImportView';
 import AnalyticsView from './components/views/AnalyticsView';
+import ViralityPredictorView from './components/views/ViralityPredictorView';
+import SimulationStudioView from './components/views/SimulationStudioView';
 import StrategyView from './components/views/StrategyView';
 import CalendarView from './components/views/CalendarView';
 import DraftStudioView from './components/views/DraftStudioView';
@@ -95,6 +97,8 @@ export default function App() {
     creators: 'Creator Profiles',
     import: 'Data Import & Readiness',
     analytics: 'Analytics & Posts',
+    virality: 'Virality ML Predictor',
+    simulation: 'Growth & Content Simulation',
     strategy: 'Growth Strategy',
     calendar: 'Content Calendar',
     drafts: 'Draft Studio',
@@ -170,6 +174,14 @@ export default function App() {
 
           {activeView === 'analytics' && (
             <AnalyticsView creatorId={selectedCreator} />
+          )}
+
+          {activeView === 'virality' && (
+            <ViralityPredictorView creatorId={selectedCreator} showToast={showToast} />
+          )}
+
+          {activeView === 'simulation' && (
+            <SimulationStudioView creatorId={selectedCreator} showToast={showToast} />
           )}
 
           {activeView === 'strategy' && (

@@ -14,7 +14,8 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
-  Activity
+  Activity,
+  Zap
 } from 'lucide-react';
 
 export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIsMobileOpen, pendingCount = 0, onOpenAdvisor }) {
@@ -23,6 +24,8 @@ export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIs
     { id: 'creators', label: 'Creators', icon: Users },
     { id: 'import', label: 'Data Import & Readiness', icon: UploadCloud },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'virality', label: 'Virality ML Predictor', icon: Sparkles },
+    { id: 'simulation', label: 'Simulation Studio', icon: Activity },
     { id: 'strategy', label: 'Growth Strategy', icon: Compass },
     { id: 'calendar', label: 'Content Calendar', icon: Calendar },
     { id: 'drafts', label: 'Draft Studio', icon: PenTool },

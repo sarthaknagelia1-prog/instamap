@@ -7,17 +7,20 @@ Analytics and Performance endpoints:
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.database.session import get_db
-from backend.database.models import Post, Creator
+from backend.database.models import Post, Creator, TrendingSignal
 from backend.security import get_current_user, verify_creator_access, User
 from backend.analytics.metrics import calculate_aggregate_metrics, calculate_post_engagement_rate
 from backend.analytics.trends import detect_trends, find_best_posting_window
 from backend.analytics.anomalies import detect_anomalies
+from backend.analytics.virality import ViralityPredictor
+from backend.analytics.simulation import GrowthSimulator
 from backend.agents.analyst_agent import run_analyst_agent
 
 router = APIRouter(tags=["Analytics"])
@@ -349,4 +352,145 @@ def get_analytics_time_series(
         "total_data_points": len(series_data),
         "series": series_data,
     }
+
+
+# ---------------------------------------------------------
+# Virality ML & Simulation Endpoints
+# ---------------------------------------------------------
+
+class ViralityPredictionRequest(BaseModel):
+    creator_id: str = Field(..., description="Target creator identifier")
+    hook: Optional[str] = Field("", description="Primary hook text / first 3 seconds / headline")
+    caption: Optional[str] = Field("", description="Post caption text")
+    content_type: str = Field("REEL", description="Format: REEL, CAROUSEL, IMAGE, VIDEO")
+    scheduled_time: Optional[datetime] = Field(None, description="Planned posting datetime in ISO-8601")
+    hashtags: Optional[List[str]] = Field(default_factory=list, description="Target hashtags")
+
+
+class GrowthSimulationRequest(BaseModel):
+    creator_id: str = Field(..., description="Target creator identifier")
+    days: int = Field(60, ge=14, le=180, description="Simulation forecast horizon in days")
+    iterations: int = Field(100, ge=20, le=500, description="Monte Carlo simulation iterations")
+
+
+class PostSimulationRequest(BaseModel):
+    creator_id: str = Field(..., description="Target creator identifier")
+    hook: Optional[str] = Field("", description="Hook text")
+    caption: Optional[str] = Field("", description="Caption text")
+    content_type: str = Field("REEL", description="Format: REEL, CAROUSEL, IMAGE, VIDEO")
+    scheduled_time: Optional[datetime] = Field(None, description="Planned posting datetime in ISO-8601")
+    hashtags: Optional[List[str]] = Field(default_factory=list, description="Target hashtags")
+    draws: int = Field(500, ge=50, le=2000, description="Number of Monte Carlo draws")
+
+
+def _get_creator_context(creator_id: str, db: Session) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Fetches creator's historical posts and active trending signals for ML models."""
+    posts = (
+        db.query(Post)
+        .filter_by(creator_id=creator_id)
+        .order_by(Post.timestamp.desc())
+        .limit(100)
+        .all()
+    )
+    hist_posts = [
+        {
+            "post_id": p.post_id,
+            "content_type": p.content_type,
+            "timestamp": p.timestamp.isoformat() if p.timestamp else None,
+            "likes_count": p.likes_count,
+            "comments_count": p.comments_count,
+            "shares_count": p.shares_count,
+            "saves_count": p.saves_count,
+            "reach": p.reach,
+            "impressions": p.impressions,
+            "engagement_rate": p.engagement_rate,
+            "caption_text": p.caption_text,
+        }
+        for p in posts
+    ]
+
+    signals = db.query(TrendingSignal).all()
+    active_trends = [s.topic for s in signals if s.topic]
+    return hist_posts, active_trends
+
+
+@router.post("/analytics/predict-virality")
+def predict_virality(
+    payload: ViralityPredictionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Evaluates candidate post attributes with the Virality ML Layer:
+    - Hook strength & cognitive curiosity triggers
+    - Algorithmic format affinity (Reel vs Carousel vs Static)
+    - Peak posting window alignment
+    - Saveability / Shareability friction & CTA density
+    - Overlap with active viral trending radar signals
+    """
+    verify_creator_access(payload.creator_id, db=db, current_user=current_user)
+    hist_posts, active_trends = _get_creator_context(payload.creator_id, db)
+
+    prediction = ViralityPredictor.predict(
+        hook=payload.hook or "",
+        caption=payload.caption or "",
+        content_type=payload.content_type,
+        scheduled_time=payload.scheduled_time,
+        hashtags=payload.hashtags or [],
+        historical_posts=hist_posts,
+        active_trends=active_trends,
+    )
+    return {"creator_id": payload.creator_id, **prediction}
+
+
+@router.post("/analytics/simulation/growth")
+def simulate_growth(
+    payload: GrowthSimulationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Executes a Monte Carlo growth simulation over a 30, 60, or 90-day horizon:
+    - Compares Baseline vs Recommended vs Aggressive scenarios.
+    - Computes 10th (conservative), 50th (median), and 90th (breakout) confidence bands.
+    - Projects cumulative reach, interactions, and estimated net followers.
+    """
+    verify_creator_access(payload.creator_id, db=db, current_user=current_user)
+    hist_posts, _ = _get_creator_context(payload.creator_id, db)
+
+    sim_result = GrowthSimulator.simulate_growth(
+        historical_posts=hist_posts,
+        days=payload.days,
+        iterations=payload.iterations,
+    )
+    return {"creator_id": payload.creator_id, **sim_result}
+
+
+@router.post("/analytics/simulation/post")
+def simulate_post_reach(
+    payload: PostSimulationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Executes a What-If Monte Carlo simulation for a specific candidate post:
+    - Runs 500 draws based on historical reach distribution and virality multiplier.
+    - Computes reach percentiles (p10, p25, p50, p75, p90, p99).
+    - Calculates breakout probability and distribution histogram bins.
+    """
+    verify_creator_access(payload.creator_id, db=db, current_user=current_user)
+    hist_posts, active_trends = _get_creator_context(payload.creator_id, db)
+
+    sim_result = GrowthSimulator.simulate_post(
+        hook=payload.hook or "",
+        caption=payload.caption or "",
+        content_type=payload.content_type,
+        scheduled_time=payload.scheduled_time,
+        hashtags=payload.hashtags or [],
+        historical_posts=hist_posts,
+        active_trends=active_trends,
+        draws=payload.draws,
+    )
+    return {"creator_id": payload.creator_id, **sim_result}
+
 
