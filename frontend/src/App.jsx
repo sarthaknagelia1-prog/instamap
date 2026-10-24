@@ -4,6 +4,7 @@ import Sidebar from './components/shell/Sidebar';
 import TopNav from './components/shell/TopNav';
 import ToastContainer from './components/shell/ToastContainer';
 
+import LoginView from './components/views/LoginView';
 import OverviewDashboard from './components/views/OverviewDashboard';
 import CreatorsView from './components/views/CreatorsView';
 import DataImportView from './components/views/DataImportView';
@@ -19,6 +20,15 @@ import ApprovalsView from './components/views/ApprovalsView';
 import AdvisoryDrawer from './components/views/AdvisoryDrawer';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('instamap_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [activeView, setActiveView] = useState('overview');
   const [creators, setCreators] = useState([]);
   const [selectedCreator, setSelectedCreator] = useState('creator_sarthak');
@@ -39,6 +49,25 @@ export default function App() {
 
   const handleDismissToast = (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    if (user.allowed_creators && user.allowed_creators.length > 0) {
+      setSelectedCreator(user.allowed_creators[0]);
+    }
+    refreshCreators();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {}
+    localStorage.removeItem('instamap_token');
+    localStorage.removeItem('instamap_api_key');
+    localStorage.removeItem('instamap_user');
+    setCurrentUser(null);
+    showToast('Signed out of workspace.', 'info');
   };
 
   const refreshCreators = () => {
@@ -64,8 +93,10 @@ export default function App() {
       .then(() => setIsOnline(true))
       .catch(() => setIsOnline(false));
 
-    refreshCreators();
-    refreshPendingCount();
+    if (currentUser) {
+      refreshCreators();
+      refreshPendingCount();
+    }
 
     const interval = setInterval(() => {
       api.getHealth()
@@ -74,7 +105,7 @@ export default function App() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [selectedCreator]);
+  }, [selectedCreator, currentUser]);
 
   const handleRunCycle = async () => {
     setIsCycleRunning(true);
@@ -107,6 +138,16 @@ export default function App() {
     approvals: 'Approvals & History',
   };
 
+  // If unauthenticated, present the Login & Workspace Switcher view
+  if (!currentUser) {
+    return (
+      <>
+        <LoginView onLoginSuccess={handleLoginSuccess} showToast={showToast} />
+        <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex antialiased">
       {/* Sidebar navigation */}
@@ -136,6 +177,8 @@ export default function App() {
           isCycleRunning={isCycleRunning}
           isOnline={isOnline}
           onToggleMobile={() => setIsMobileOpen(!isMobileOpen)}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
         <main className="p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto flex-1">

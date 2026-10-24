@@ -1,16 +1,19 @@
 /**
  * Centralized API Client for InstaMap
  * Communicates with FastAPI backend, supporting environment variable overrides,
- * error handling, timeouts, and JSON/Multipart uploads.
+ * Bearer/API Key authentication, error handling, timeouts, and JSON/Multipart uploads.
  */
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:8000');
 
-
 function getAuthHeaders() {
   const headers = {};
-  const token = typeof window !== 'undefined' ? (localStorage.getItem('instamap_api_key') || import.meta.env?.VITE_API_KEY) : null;
+  const token = typeof window !== 'undefined'
+    ? (localStorage.getItem('instamap_token') || localStorage.getItem('instamap_api_key') || import.meta.env?.VITE_API_KEY)
+    : null;
+
   if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
     headers['X-API-Key'] = token;
   }
   return headers;
@@ -77,6 +80,11 @@ async function patch(path, body) {
 }
 
 export const api = {
+  // Authentication & Session
+  login: (payload) => post('/auth/login', payload),
+  logout: () => post('/auth/logout', {}),
+  getMe: () => get('/auth/me'),
+
   // System Health
   getHealth: () => get('/health'),
 
@@ -94,7 +102,7 @@ export const api = {
   ingestPaste: (payload) => post('/data/ingest/paste', payload),
   ingestMetaAccount: (payload) => post('/data/ingest/meta-account', payload),
 
-  // Analytics
+  // Analytics, Virality ML & Simulation
   getAnalyticsSummary: (creatorId) => get('/analytics/summary', { creator_id: creatorId }),
   getAnalyticsPerformance: (creatorId) => get(`/analytics/performance/${encodeURIComponent(creatorId)}`),
   getAnalyticsTimeSeries: (creatorId, limit = 50) => get('/analytics/time-series', { creator_id: creatorId, limit }),

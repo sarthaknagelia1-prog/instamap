@@ -25,6 +25,7 @@ from backend.api.routes_trends import router as trends_router
 from backend.api.routes_approvals import router as approvals_router
 from backend.api.routes_reports import router as reports_router
 from backend.api.routes_advisory import router as advisory_router
+from backend.api.routes_auth import router as auth_router
 
 
 @asynccontextmanager
@@ -61,6 +62,7 @@ app.include_router(trends_router)
 app.include_router(approvals_router)
 app.include_router(reports_router)
 app.include_router(advisory_router)
+app.include_router(auth_router)
 
 # Mount static directory and creator dashboard SPA
 static_dir = os.path.join(os.path.dirname(__file__), "static")
