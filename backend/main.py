@@ -41,13 +41,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for frontend integrations
+# CORS middleware with explicit trusted origins (SEC-03)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key", "Accept"],
 )
 
 # Include route routers
@@ -103,8 +103,8 @@ def health_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         db_status = "connected"
-    except Exception as e:
-        db_status = f"error: {str(e)}"
+    except Exception:
+        db_status = "unavailable"
 
     return {
         "status": "ok",

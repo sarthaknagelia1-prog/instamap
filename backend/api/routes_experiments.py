@@ -20,6 +20,7 @@ from sqlalchemy import desc
 
 from backend.database.session import get_db
 from backend.database.models import Creator, Experiment, Post, Strategy, utcnow
+from backend.security import get_current_user, verify_creator_access, User
 from backend.analytics.metrics import calculate_aggregate_metrics, calculate_post_engagement_rate
 from backend.analytics.trends import detect_trends
 from backend.experiments.evaluator import evaluate_experiment_metrics
@@ -76,19 +77,15 @@ class ExperimentResponse(BaseModel):
 def propose_experiment(
     payload: ProposeExperimentRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Analyzes creator performance gaps to propose a structured A/B hypothesis test.
-    Persists the proposed experiment in the database.
+    Persists the proposed experiment in the database with authorization.
     """
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
-    posts = db.query(Post).filter_by(creator_id=payload.creator_id).all()
+    posts = db.query(Post).filter_by(creator_id=creator.id).all()
     post_dicts = [
         {
             "content_type": p.content_type,
@@ -105,7 +102,7 @@ def propose_experiment(
     trends = detect_trends(post_dicts)
 
     exp_data = run_experiment_agent(
-        creator_id=payload.creator_id,
+        creator_id=creator.id,
         metrics=metrics,
         trends=trends,
         niche=payload.niche or creator.niche,
@@ -133,19 +130,15 @@ def propose_experiment(
 def create_custom_experiment(
     payload: CreateExperimentRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Manually registers an A/B experiment with custom hypothesis and variants."""
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     exp_id = str(uuid.uuid4())
     record = Experiment(
         id=exp_id,
-        creator_id=payload.creator_id,
+        creator_id=creator.id,
         title=payload.title,
         hypothesis=payload.hypothesis,
         metric_target=payload.metric_target or "engagement_rate",
@@ -180,11 +173,18 @@ def list_experiments(
     status_filter: Optional[str] = Query(None, alias="status"),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Lists experiments with optional filtering by creator and status."""
+    """Lists experiments with tenant isolation and optional filtering by creator and status."""
     query = db.query(Experiment)
     if creator_id:
+        verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter_by(creator_id=creator_id)
+    else:
+        if current_user.role != "admin":
+            workspace_creators = db.query(Creator.id).filter(Creator.workspace_id == current_user.workspace_id).subquery()
+            query = query.filter(Experiment.creator_id.in_(workspace_creators))
+
     if status_filter:
         query = query.filter_by(status=status_filter.lower())
 
@@ -213,11 +213,14 @@ def list_experiments(
 def get_experiment(
     experiment_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieves full details of a specific experiment."""
+    """Retrieves full details of a specific experiment with tenant authorization."""
     record = db.get(Experiment, experiment_id)
     if not record:
         raise HTTPException(status_code=404, detail="Experiment not found.")
+
+    verify_creator_access(record.creator_id, db=db, current_user=current_user)
 
     return {
         "id": record.id,
@@ -240,11 +243,14 @@ def assign_experiment_posts(
     experiment_id: str,
     payload: AssignPostsRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Assigns post IDs from ingested history to Variant A and Variant B."""
+    """Assigns post IDs from ingested history to Variant A and Variant B with authorization."""
     record = db.get(Experiment, experiment_id)
     if not record:
         raise HTTPException(status_code=404, detail="Experiment not found.")
+
+    verify_creator_access(record.creator_id, db=db, current_user=current_user)
 
     va = dict(record.variant_a or {})
     vb = dict(record.variant_b or {})
@@ -278,14 +284,17 @@ def evaluate_experiment(
     experiment_id: str,
     alpha: float = Query(0.05, ge=0.01, le=0.10, description="Significance threshold (0.05 = 95% confidence)"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Evaluates statistical significance (Welch's t-test) across assigned posts.
-    If conclusive, writes outcome back to creator Strategy memory (feedback loop).
+    If conclusive, writes outcome back to creator Strategy memory with authorization.
     """
     record = db.get(Experiment, experiment_id)
     if not record:
         raise HTTPException(status_code=404, detail="Experiment not found.")
+
+    verify_creator_access(record.creator_id, db=db, current_user=current_user)
 
     va = record.variant_a or {}
     vb = record.variant_b or {}

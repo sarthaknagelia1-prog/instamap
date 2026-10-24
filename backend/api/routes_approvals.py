@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/api/routes_approvals.py
 
 REST API Endpoints for Approval & Review Layer:
@@ -18,7 +18,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from backend.database.session import get_db
-from backend.database.models import ApprovalItem, ContentDraft, Experiment, Strategy, ContentPlan, utcnow
+from backend.database.models import ApprovalItem, ContentDraft, Experiment, Strategy, ContentPlan, Creator, utcnow
+from backend.security import get_current_user, verify_creator_access, User
 from backend.approvals.events import event_bus
 
 router = APIRouter(prefix="/approvals", tags=["Approvals"])
@@ -130,12 +131,20 @@ def list_approvals(
     status: Optional[str] = Query("pending", description="Filter by status ('pending', 'approved', 'rejected', or 'all')"),
     item_type: Optional[str] = Query(None, description="Filter by item type ('content_draft', 'strategy', etc.)"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Lists approval queue items with optional status and creator filtering."""
+    """Lists approval queue items with tenant isolation and optional status/creator filtering."""
     query = db.query(ApprovalItem)
 
     if creator_id:
+        verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter(ApprovalItem.creator_id == creator_id)
+    else:
+        if current_user.role != "admin":
+            from sqlalchemy import select
+            workspace_creators = select(Creator.id).filter(Creator.workspace_id == current_user.workspace_id)
+            query = query.filter(ApprovalItem.creator_id.in_(workspace_creators))
+
     if status and status.lower() != "all":
         query = query.filter(ApprovalItem.status == status.lower())
     if item_type:
@@ -149,8 +158,22 @@ def list_approvals(
 def get_approval_stats(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Computes approval velocity and status metrics for a creator."""
+    """Computes approval velocity and status metrics for an authorized creator."""
+    creator = db.get(Creator, creator_id)
+    if creator:
+        if not current_user.can_access_creator(creator.id, getattr(creator, "workspace_id", "default")):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access forbidden: you do not have permission to view stats for this creator.",
+            )
+    elif not current_user.can_access_creator(creator_id, None):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to view stats for this creator.",
+        )
+
     items = db.query(ApprovalItem).filter(ApprovalItem.creator_id == creator_id).all()
     total = len(items)
     pending = sum(1 for i in items if i.status == "pending")
@@ -176,11 +199,14 @@ def get_approval_stats(
 def get_approval_item(
     approval_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieves full details of a specific approval queue item."""
+    """Retrieves full details of a specific approval queue item with authorization."""
     record = db.get(ApprovalItem, approval_id)
     if not record:
         raise HTTPException(status_code=404, detail="Approval item not found.")
+
+    verify_creator_access(record.creator_id, db=db, current_user=current_user)
     return _format_approval(record)
 
 
@@ -189,18 +215,32 @@ def submit_approval_decision(
     approval_id: str,
     payload: ApprovalDecisionRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Submits a review decision (approved, rejected, or revision_requested).
-    Automatically cascades the state change to the underlying resource:
-    - Approved draft -> status 'approved'
-    - Rejected draft -> status 'archived' (preserves audit integrity)
-    - Approved experiment -> status 'active'
-    - Rejected experiment -> status 'cancelled'
+    Enforces tenant authorization and strict state machine transitions (SEC-07):
+    - Rejects transitions on non-pending items with 409 Conflict.
+    - Records reviewer identity and timestamp in audit trail.
+    - Cascades the state change to the underlying resource:
+      * Approved draft -> status 'approved'
+      * Rejected draft -> status 'archived' (preserves audit integrity)
+      * Approved experiment -> status 'active'
+      * Rejected experiment -> status 'cancelled'
     """
     record = db.get(ApprovalItem, approval_id)
     if not record:
         raise HTTPException(status_code=404, detail="Approval item not found.")
+
+    # Authorization
+    verify_creator_access(record.creator_id, db=db, current_user=current_user)
+
+    # State transition validation (SEC-07)
+    if record.status != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Approval item '{approval_id}' has already been decided with status '{record.status}'.",
+        )
 
     decision = payload.decision.lower().strip()
     if decision not in ("approved", "rejected", "revision_requested"):
@@ -217,6 +257,9 @@ def submit_approval_decision(
         "notes": payload.notes,
         "rejection_reason": payload.rejection_reason,
         "reviewed_at": now.isoformat(),
+        "reviewer_id": current_user.user_id,
+        "reviewer_workspace": current_user.workspace_id,
+        "reviewer_role": current_user.role,
     }
 
     # Cascade state change to underlying resource
@@ -243,6 +286,7 @@ def submit_approval_decision(
         "creator_id": record.creator_id,
         "item_type": record.item_type,
         "decision": decision,
+        "reviewer_id": current_user.user_id,
     })
 
     return _format_approval(record)

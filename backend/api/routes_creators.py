@@ -17,6 +17,7 @@ from sqlalchemy import desc, asc, func
 
 from backend.database.session import get_db
 from backend.database.models import Creator, Post, IngestionLog
+from backend.security import get_current_user, verify_creator_access, User
 
 router = APIRouter(prefix="/creators", tags=["Creators"])
 
@@ -75,9 +76,18 @@ class IngestionLogItem(BaseModel):
 # ---------------------------------------------------------
 
 @router.get("", response_model=List[CreatorListItem])
-def list_creators(db: Session = Depends(get_db)):
-    """Lists all creators registered in the system with their post counts."""
-    creators = db.query(Creator).all()
+def list_creators(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lists creators registered in the system scoped to the authenticated workspace."""
+    query = db.query(Creator)
+    if current_user.role != "admin":
+        query = query.filter(Creator.workspace_id == current_user.workspace_id)
+    if current_user.allowed_creators:
+        query = query.filter(Creator.id.in_(current_user.allowed_creators))
+
+    creators = query.all()
     result = []
     for c in creators:
         count = db.query(Post).filter_by(creator_id=c.id).count()
@@ -99,18 +109,16 @@ def list_creators(db: Session = Depends(get_db)):
 
 
 @router.get("/{creator_id}", response_model=CreatorListItem)
-def get_creator(creator_id: str, db: Session = Depends(get_db)):
-    """Returns details for a single creator."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
-    count = db.query(Post).filter_by(creator_id=creator_id).count()
+def get_creator(
+    creator_id: str,
+    creator: Creator = Depends(verify_creator_access),
+    db: Session = Depends(get_db),
+):
+    """Returns details for a single creator if authorized."""
+    count = db.query(Post).filter_by(creator_id=creator.id).count()
     latest_post = (
         db.query(Post)
-        .filter_by(creator_id=creator_id)
+        .filter_by(creator_id=creator.id)
         .order_by(Post.timestamp.desc())
         .first()
     )
@@ -132,17 +140,11 @@ def get_creator_posts(
     order: str = Query("desc", description="asc or desc"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    creator: Creator = Depends(verify_creator_access),
     db: Session = Depends(get_db),
 ):
-    """Returns a paginated list of posts for a creator with sorting and filtering."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
-
-    query = db.query(Post).filter_by(creator_id=creator_id)
+    """Returns a paginated list of posts for an authorized creator."""
+    query = db.query(Post).filter_by(creator_id=creator.id)
 
     if content_type:
         query = query.filter(Post.content_type == content_type.lower())
@@ -182,7 +184,7 @@ def get_creator_posts(
     ]
 
     return {
-        "creator_id": creator_id,
+        "creator_id": creator.id,
         "total_count": total_count,
         "page": page,
         "page_size": page_size,
@@ -193,19 +195,13 @@ def get_creator_posts(
 @router.get("/{creator_id}/ingestion-logs", response_model=List[IngestionLogItem])
 def get_creator_ingestion_logs(
     creator_id: str,
+    creator: Creator = Depends(verify_creator_access),
     db: Session = Depends(get_db),
 ):
-    """Returns audit logs of past data upload and ingestion runs for a creator."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
-
+    """Returns audit logs of past data upload and ingestion runs for an authorized creator."""
     logs = (
         db.query(IngestionLog)
-        .filter_by(creator_id=creator_id)
+        .filter_by(creator_id=creator.id)
         .order_by(IngestionLog.created_at.desc())
         .all()
     )

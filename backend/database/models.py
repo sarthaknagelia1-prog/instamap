@@ -24,6 +24,7 @@ class Creator(Base):
     __tablename__ = "creators"
 
     id = Column(String, primary_key=True)
+    workspace_id = Column(String, default="default", index=True, nullable=False)
     niche = Column(String, nullable=True)
     audience = Column(String, nullable=True)
     content_preferences = Column(JSON, default=list)

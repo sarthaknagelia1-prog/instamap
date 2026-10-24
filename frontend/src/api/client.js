@@ -6,6 +6,16 @@
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:8000');
 
+
+function getAuthHeaders() {
+  const headers = {};
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('instamap_api_key') || import.meta.env?.VITE_API_KEY) : null;
+  if (token) {
+    headers['X-API-Key'] = token;
+  }
+  return headers;
+}
+
 async function handleResponse(res) {
   if (!res.ok) {
     let errorDetail = `HTTP ${res.status}: ${res.statusText}`;
@@ -35,7 +45,7 @@ async function get(path, params = {}) {
   });
   const res = await fetch(url.toString(), {
     method: 'GET',
-    headers: { 'Accept': 'application/json' },
+    headers: { 'Accept': 'application/json', ...getAuthHeaders() },
   });
   return handleResponse(res);
 }
@@ -44,7 +54,7 @@ async function post(path, body, isFormData = false) {
   const url = new URL(path, API_BASE);
   const options = {
     method: 'POST',
-    headers: { 'Accept': 'application/json' },
+    headers: { 'Accept': 'application/json', ...getAuthHeaders() },
   };
   if (isFormData) {
     options.body = body;
@@ -60,7 +70,7 @@ async function patch(path, body) {
   const url = new URL(path, API_BASE);
   const res = await fetch(url.toString(), {
     method: 'PATCH',
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(body),
   });
   return handleResponse(res);

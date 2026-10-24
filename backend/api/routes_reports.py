@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 
 from backend.database.session import get_db
 from backend.database.models import Creator
+from backend.security import get_current_user, verify_creator_access, User
+from backend.config import settings
 from backend.reporting.weekly_report import generate_weekly_report
 from backend.data.ingestion.ingest import run_ingestion
 from backend.orchestrator.state_machine import run_orchestrator
@@ -41,13 +43,11 @@ class OnboardingRequest(BaseModel):
 def get_weekly_report(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Generates an executive weekly growth report for a creator."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(status_code=404, detail="Creator not found.")
-
-    report = generate_weekly_report(creator_id, db=db)
+    """Generates an executive weekly growth report for an authorized creator."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
+    report = generate_weekly_report(creator.id, db=db)
     return report
 
 
@@ -55,13 +55,11 @@ def get_weekly_report(
 def get_weekly_report_html(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Returns a standalone, styled, printable HTML weekly report."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(status_code=404, detail="Creator not found.")
-
-    report = generate_weekly_report(creator_id, db=db)
+    """Returns a standalone, styled, printable HTML weekly report for an authorized creator."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
+    report = generate_weekly_report(creator.id, db=db)
     return HTMLResponse(content=report["html_report"], status_code=200)
 
 
@@ -69,6 +67,7 @@ def get_weekly_report_html(
 def initiate_creator_onboarding(
     payload: OnboardingRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Single-session onboarding flow:
@@ -80,6 +79,21 @@ def initiate_creator_onboarding(
     creator_id = payload.creator_id.strip()
     niche = payload.niche or "Tech & AI"
 
+    # Input bounds check (SEC-04)
+    if len(payload.raw_data) > settings.MAX_INGEST_RECORDS:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Raw dataset contains {len(payload.raw_data)} records, exceeding the limit of {settings.MAX_INGEST_RECORDS}.",
+        )
+
+    # Authorization check if creator exists
+    existing_creator = db.get(Creator, creator_id)
+    if existing_creator and not current_user.can_access_creator(existing_creator.id, existing_creator.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to onboard this creator.",
+        )
+
     # Step 1: Ingest
     ingest_res = run_ingestion(
         session_or_factory=db,
@@ -87,6 +101,7 @@ def initiate_creator_onboarding(
         source="onboarding_flow",
         raw_data=payload.raw_data,
         quality_threshold=0.4,
+        workspace_id=current_user.workspace_id,
     )
 
     # Step 2: Ensure Creator record has niche set

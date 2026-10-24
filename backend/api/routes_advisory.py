@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.session import get_db
 from backend.database.models import Creator, utcnow
+from backend.security import get_current_user, verify_creator_access, User
 from backend.agents.advisory_agent import run_advisory_agent, gather_creator_advisory_context
 
 router = APIRouter(prefix="/advisory", tags=["Advisory Engine"])
@@ -25,7 +26,7 @@ router = APIRouter(prefix="/advisory", tags=["Advisory Engine"])
 
 class ChatRequest(BaseModel):
     creator_id: str = Field(..., description="Unique creator identifier")
-    message: str = Field(..., description="User question or guidance request")
+    message: str = Field(..., max_length=10000, description="User question or guidance request")
     conversation_history: Optional[List[Dict[str, str]]] = Field(None, description="Previous conversation turns")
 
 
@@ -45,6 +46,7 @@ class ChatResponse(BaseModel):
 def chat_with_growth_advisor(
     payload: ChatRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Conversational AI Growth Advisor:
@@ -56,6 +58,8 @@ def chat_with_growth_advisor(
 
     if not msg:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    verify_creator_access(cid, db=db, current_user=current_user)
 
     advisor_result = run_advisory_agent(
         creator_id=cid,
@@ -77,13 +81,14 @@ def chat_with_growth_advisor(
 def get_advisory_starter_prompts(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Returns tailored starter prompt chips for the creator."""
-    creator = db.get(Creator, creator_id)
+    """Returns tailored starter prompt chips for an authorized creator."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
     niche = creator.niche if creator and creator.niche else "Tech & AI"
 
     return {
-        "creator_id": creator_id,
+        "creator_id": creator.id,
         "niche": niche,
         "starter_prompts": [
             f"⚡ Give me 3 high-retention hooks for {niche}",

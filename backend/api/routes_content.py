@@ -20,6 +20,7 @@ from sqlalchemy import desc
 
 from backend.database.session import get_db
 from backend.database.models import Creator, Strategy, ContentPlan, ContentDraft, Post
+from backend.security import get_current_user, verify_creator_access, User
 from backend.analytics.metrics import calculate_aggregate_metrics
 from backend.analytics.trends import detect_trends, find_best_posting_window
 from backend.agents.strategy_agent import run_strategy_agent
@@ -109,14 +110,10 @@ class MarkPublishedRequest(BaseModel):
 def generate_strategy(
     payload: GenerateStrategyRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Generates and persists a customized growth strategy based on creator performance."""
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     posts = db.query(Post).filter_by(creator_id=payload.creator_id).all()
     post_dicts = [
@@ -155,8 +152,10 @@ def generate_strategy(
 def get_latest_strategy(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieves the latest active strategy for a creator."""
+    """Retrieves the latest active strategy for an authorized creator."""
+    verify_creator_access(creator_id, db=db, current_user=current_user)
     strat = (
         db.query(Strategy)
         .filter_by(creator_id=creator_id)
@@ -186,14 +185,10 @@ def get_latest_strategy(
 def create_content_plan(
     payload: GeneratePlanRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Generates a 7-day content schedule matching the creator's active strategy."""
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     # Fetch strategy
     strat = None
@@ -235,9 +230,10 @@ def create_content_plan(
 def generate_content_plan_alias(
     payload: GeneratePlanRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Alias for POST /content/plan to generate a weekly plan."""
-    return create_content_plan(payload, db=db)
+    return create_content_plan(payload, db=db, current_user=current_user)
 
 
 @router.get("/content/plans/{creator_id}")
@@ -245,11 +241,10 @@ def generate_content_plan_alias(
 def get_latest_content_plan(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieves the latest 7-day content schedule for a creator, or auto-generates one if posts exist."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(status_code=404, detail=f"Creator '{creator_id}' not found.")
+    """Retrieves the latest 7-day content schedule for an authorized creator, or auto-generates one if posts exist."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
 
     plan = (
         db.query(ContentPlan)
@@ -298,17 +293,13 @@ def get_latest_content_plan(
 def generate_content_drafts(
     payload: GenerateDraftsRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Generates ready-to-post content drafts for all items in a content plan
     or for a single custom item. Persists items to the ContentDraft table.
     """
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     items_to_generate: List[Dict[str, Any]] = []
 
@@ -384,11 +375,20 @@ def list_content_drafts(
     content_type: Optional[str] = Query(None, description="reel | carousel | image | story"),
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Lists drafted content packages with optional filtering."""
+    """Lists drafted content packages with tenant isolation and optional filtering."""
     query = db.query(ContentDraft)
     if creator_id:
+        verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter_by(creator_id=creator_id)
+    else:
+        # Scope drafts to creators in the user's workspace unless admin
+        if current_user.role != "admin":
+            from sqlalchemy import select
+            workspace_creators = select(Creator.id).filter(Creator.workspace_id == current_user.workspace_id)
+            query = query.filter(ContentDraft.creator_id.in_(workspace_creators))
+
     if status_filter:
         query = query.filter_by(status=status_filter.lower())
     if content_type:
@@ -421,11 +421,14 @@ def list_content_drafts(
 def get_content_draft(
     draft_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieves full details for a single content draft."""
+    """Retrieves full details for a single content draft with tenant authorization."""
     draft = db.get(ContentDraft, draft_id)
     if not draft:
         raise HTTPException(status_code=404, detail="Draft not found")
+
+    verify_creator_access(draft.creator_id, db=db, current_user=current_user)
 
     return {
         "id": draft.id,
@@ -450,11 +453,14 @@ def update_draft_status(
     draft_id: str,
     payload: UpdateDraftStatusRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Updates status of a draft (e.g. approve for publishing or mark published)."""
+    """Updates status of a draft with authorization."""
     draft = db.get(ContentDraft, draft_id)
     if not draft:
         raise HTTPException(status_code=404, detail="Draft not found")
+
+    verify_creator_access(draft.creator_id, db=db, current_user=current_user)
 
     draft.status = payload.status.lower()
     db.commit()
@@ -484,14 +490,17 @@ def mark_draft_published(
     draft_id: str,
     payload: MarkPublishedRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Marks an approved draft as manually published by the creator.
+    Marks an approved draft as manually published by an authorized creator.
     Records the actual Instagram post ID or permalink URL and timestamps publication.
     """
     draft = db.get(ContentDraft, draft_id)
     if not draft:
         raise HTTPException(status_code=404, detail="Draft not found")
+
+    verify_creator_access(draft.creator_id, db=db, current_user=current_user)
 
     from backend.database.models import utcnow
     now = utcnow()

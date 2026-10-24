@@ -49,8 +49,18 @@ export default function AdvisoryChatbot({ creatorId, metrics, bestWindow }) {
     }
   };
 
+  const escapeHtml = (unsafe) => {
+    return (unsafe || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
   const renderMarkdown = (text) => {
-    return text
+    const safe = escapeHtml(text);
+    return safe
       .replace(/### (.*?)\n/g, '<h4 class="text-sky-400 font-bold text-sm my-2">$1</h4>')
       .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em class="text-slate-200 italic">$1</em>')

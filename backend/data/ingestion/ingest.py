@@ -19,10 +19,10 @@ from backend.database.models import Creator, Post, IngestionLog
 from backend.database.session import get_session_factory, SessionLocal
 
 
-def _upsert_creator(session: Session, creator_id: str) -> Creator:
+def _upsert_creator(session: Session, creator_id: str, workspace_id: Optional[str] = None) -> Creator:
     creator = session.get(Creator, creator_id)
     if creator is None:
-        creator = Creator(id=creator_id)
+        creator = Creator(id=creator_id, workspace_id=workspace_id or "default")
         session.add(creator)
         session.flush()
     return creator
@@ -37,9 +37,15 @@ def _parse_dt(value: Any) -> Optional[datetime]:
         return None
 
 
-def persist_records(session: Session, creator_id: str, source: str, records: List[Dict[str, Any]]) -> int:
+def persist_records(
+    session: Session,
+    creator_id: str,
+    source: str,
+    records: List[Dict[str, Any]],
+    workspace_id: Optional[str] = None,
+) -> int:
     """Upserts normalized post records into the database. Returns rows inserted/updated."""
-    _upsert_creator(session, creator_id)
+    _upsert_creator(session, creator_id, workspace_id=workspace_id)
     inserted = 0
 
     for record in records:
@@ -81,6 +87,7 @@ def run_ingestion(
     source: str,
     raw_data: List[Dict[str, Any]],
     quality_threshold: float = 0.5,
+    workspace_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Full pipeline: readiness check -> (if ready) persist -> log outcome.
@@ -95,7 +102,7 @@ def run_ingestion(
         inserted = 0
         if readiness_result["data_ready"]:
             inserted = persist_records(
-                session, creator_id, source, readiness_result["processed_data"]
+                session, creator_id, source, readiness_result["processed_data"], workspace_id=workspace_id
             )
 
         log = IngestionLog(

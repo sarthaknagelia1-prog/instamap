@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.session import get_db
 from backend.database.models import Post, Creator
+from backend.security import get_current_user, verify_creator_access, User
 from backend.analytics.metrics import calculate_aggregate_metrics, calculate_post_engagement_rate
 from backend.analytics.trends import detect_trends, find_best_posting_window
 from backend.analytics.anomalies import detect_anomalies
@@ -54,6 +55,7 @@ class AnalyticsSummaryResponse(BaseModel):
 def analyze_performance(
     payload: AnalyzePerformanceRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Executes full performance analysis on a creator's ingested posts:
@@ -64,12 +66,7 @@ def analyze_performance(
     5. Updates post engagement rates in the database.
     6. Calls Analyst Agent for recommended actions.
     """
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     posts_query = (
         db.query(Post)
@@ -169,19 +166,15 @@ class TimeSeriesResponse(BaseModel):
 def get_analytics_summary(
     creator_id: str = Query(..., description="Creator identifier"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Returns quick overview summary metrics for dashboard display (cached)."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
+
     now = time.time()
     cached = _SUMMARY_CACHE.get(creator_id)
     if cached and (now - cached[0] < CACHE_TTL_SECONDS):
         return cached[1]
-
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
 
     posts = db.query(Post).filter_by(creator_id=creator_id).all()
     if not posts:
@@ -232,17 +225,13 @@ def get_analytics_summary(
 def get_creator_performance_analytics(
     creator_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns full overview performance analytics for a creator matching
     both frontend React client and the dashboard SPA requirements.
     """
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
 
     posts = (
         db.query(Post)
@@ -325,17 +314,13 @@ def get_analytics_time_series(
     creator_id: str = Query(..., description="Creator identifier"),
     limit: int = Query(50, ge=5, le=500, description="Number of recent posts to plot"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns chronologically ordered metrics (date, engagement rate, reach, likes)
     designed directly for rendering frontend line/bar charts.
     """
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
 
     posts = (
         db.query(Post)

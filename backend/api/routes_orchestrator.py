@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.session import get_db
 from backend.database.models import Creator, OrchestratorRun
+from backend.security import get_current_user, verify_creator_access, User
 from backend.agents.schemas import DecisionThresholds, utcnow
 from backend.orchestrator.state_machine import run_orchestrator
 
@@ -61,26 +62,23 @@ class OrchestratorRunListItem(BaseModel):
 def create_creator_plan(
     payload: CreatorPlanRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Executes the Orchestrator State Machine:
-    1. Fetches creator posts from PostgreSQL.
-    2. Runs quantitative & qualitative performance analytics.
-    3. Evaluates decision rules (drop % / staleness / momentum).
-    4. Routes to Strategy Planning, Executive Report, or Data Request.
-    5. Saves full execution audit trace in OrchestratorRun table.
+    1. Verifies creator authorization.
+    2. Fetches creator posts from database.
+    3. Runs quantitative & qualitative performance analytics.
+    4. Evaluates decision rules (drop % / staleness / momentum).
+    5. Routes to Strategy Planning, Executive Report, or Data Request.
+    6. Saves full execution audit trace in OrchestratorRun table.
     """
-    creator = db.get(Creator, payload.creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{payload.creator_id}' not found. Ingest creator data first.",
-        )
+    creator = verify_creator_access(payload.creator_id, db=db, current_user=current_user)
 
     job_id = str(uuid.uuid4())
     run_record = OrchestratorRun(
         id=job_id,
-        creator_id=payload.creator_id,
+        creator_id=creator.id,
         status="running",
         trigger=payload.trigger_event or "manual",
         created_at=utcnow(),
@@ -90,7 +88,7 @@ def create_creator_plan(
 
     try:
         final_state = run_orchestrator(
-            creator_id=payload.creator_id,
+            creator_id=creator.id,
             db=db,
             trigger_event=payload.trigger_event or "manual",
             thresholds=payload.thresholds,
@@ -111,7 +109,7 @@ def create_creator_plan(
 
         return {
             "job_id": job_id,
-            "creator_id": payload.creator_id,
+            "creator_id": creator.id,
             "status": "completed",
             "decision": decision_dict,
             "output": output,
@@ -121,24 +119,30 @@ def create_creator_plan(
         }
     except Exception as e:
         run_record.status = "failed"
-        run_record.result = {"error": str(e)}
+        run_record.result = {"error": "Internal execution error"}
         run_record.completed_at = utcnow()
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Orchestrator run failed: {str(e)}",
+            detail="Orchestrator run failed. Please check logs for details.",
         )
 
 
 @router.get("/{job_id}", response_model=CreatorPlanResponse)
-def get_plan_by_id(job_id: str, db: Session = Depends(get_db)):
-    """Retrieves an existing orchestrator plan by its unique job ID."""
+def get_plan_by_id(
+    job_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieves an existing orchestrator plan by its unique job ID with tenant authorization."""
     run = db.get(OrchestratorRun, job_id)
     if not run:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Orchestrator job '{job_id}' not found.",
         )
+
+    verify_creator_access(run.creator_id, db=db, current_user=current_user)
 
     return {
         "job_id": run.id,
@@ -157,18 +161,14 @@ def get_creator_plan_history(
     creator_id: str,
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Lists historical plan and strategy runs for a creator."""
-    creator = db.get(Creator, creator_id)
-    if not creator:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator '{creator_id}' not found.",
-        )
+    """Lists historical plan and strategy runs for an authorized creator."""
+    creator = verify_creator_access(creator_id, db=db, current_user=current_user)
 
     runs = (
         db.query(OrchestratorRun)
-        .filter_by(creator_id=creator_id)
+        .filter_by(creator_id=creator.id)
         .order_by(OrchestratorRun.created_at.desc())
         .limit(limit)
         .all()

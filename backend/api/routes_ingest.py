@@ -12,10 +12,13 @@ API endpoints for Data Ingestion:
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.database.session import get_db
+from backend.database.models import Creator
+from backend.security import get_current_user, User
 from backend.data.adapters.csv_adapter import CSVAdapter
 from backend.data.adapters.json_adapter import JSONAdapter
 from backend.data.adapters.paste_adapter import PasteAdapter
@@ -38,12 +41,26 @@ class IngestJsonPayload(BaseModel):
     raw_data: List[Dict[str, Any]] = Field(..., description="List of raw, unmapped record dicts")
     quality_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Minimum quality score threshold")
 
+    @field_validator("raw_data")
+    @classmethod
+    def validate_records_bound(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if len(v) > settings.MAX_INGEST_RECORDS:
+            raise ValueError(f"Payload contains {len(v)} records, exceeding maximum allowed {settings.MAX_INGEST_RECORDS}.")
+        return v
+
 
 class IngestPastePayload(BaseModel):
     creator_id: str = Field(..., description="Unique identifier for the creator")
     text_data: str = Field(..., description="Pasted table text (tab-separated from Sheets/Excel, or Markdown table)")
     source: Optional[str] = Field("bulk_paste", description="Source description")
     quality_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Minimum quality score threshold")
+
+    @field_validator("text_data")
+    @classmethod
+    def validate_paste_bound(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
+            raise ValueError("Pasted text exceeds maximum permitted size.")
+        return v
 
 
 class ReadinessResponse(BaseModel):
@@ -61,28 +78,52 @@ class IngestResponse(ReadinessResponse):
     inserted_count: int
 
 
+HTTP_413 = getattr(status, "HTTP_413_CONTENT_TOO_LARGE", 413)
+
+
 # ---------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------
 
 async def _parse_upload_file(file: UploadFile) -> List[Dict[str, Any]]:
-    """Reads and parses an uploaded file (supports .csv, .tsv, .txt, .json)."""
+    """Reads and parses an uploaded file with bounded streaming (SEC-04)."""
+    max_bytes = settings.MAX_UPLOAD_SIZE_BYTES
+    total_bytes = bytearray()
+    while chunk := await file.read(64 * 1024):
+        total_bytes.extend(chunk)
+        if len(total_bytes) > max_bytes:
+            raise HTTPException(
+                status_code=HTTP_413,
+                detail=f"Uploaded file exceeds maximum permitted size of {max_bytes // (1024 * 1024)}MB.",
+            )
     try:
-        content_bytes = await file.read()
-        text_content = content_bytes.decode("utf-8-sig")
-        filename = (file.filename or "").lower()
-
-        if filename.endswith(".json"):
-            adapter = JSONAdapter()
-            return adapter.fetch(content=text_content)
-        else:
-            adapter = CSVAdapter()
-            return adapter.fetch(content=text_content)
-    except Exception as e:
+        text_content = total_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to parse uploaded file: {str(e)}",
+            detail="Uploaded file is not valid UTF-8 text.",
         )
+
+    filename = (file.filename or "").lower()
+    try:
+        if filename.endswith(".json"):
+            adapter = JSONAdapter()
+            records = adapter.fetch(content=text_content)
+        else:
+            adapter = CSVAdapter()
+            records = adapter.fetch(content=text_content)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to parse uploaded file. Please verify delimiter and file structure.",
+        )
+
+    if len(records) > settings.MAX_INGEST_RECORDS:
+        raise HTTPException(
+            status_code=HTTP_413,
+            detail=f"Dataset contains {len(records)} records, exceeding the limit of {settings.MAX_INGEST_RECORDS}.",
+        )
+    return records
 
 
 # ---------------------------------------------------------
@@ -132,10 +173,15 @@ def get_supported_sources():
 
 
 @router.post("/data-readiness", response_model=ReadinessResponse)
-async def check_data_readiness(request: Request):
+async def check_data_readiness(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """
     Evaluates dataset quality and coverage without persisting to the database.
     Accepts either a JSON body or a multipart CSV/JSON file upload.
+    Enforces tenant boundaries and input limits.
     """
     content_type = request.headers.get("content-type", "")
 
@@ -147,10 +193,15 @@ async def check_data_readiness(request: Request):
             threshold = payload.quality_threshold
             creator_id = payload.creator_id
             source = payload.source or "custom_payload"
-        except Exception as e:
+        except ValueError as val_err:
+            raise HTTPException(
+                status_code=HTTP_413 if "exceeding" in str(val_err) else status.HTTP_400_BAD_REQUEST,
+                detail=str(val_err),
+            )
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid JSON payload: {str(e)}",
+                detail="Invalid JSON payload.",
             )
     elif "multipart/form-data" in content_type:
         form = await request.form()
@@ -174,6 +225,14 @@ async def check_data_readiness(request: Request):
             detail="Unsupported Content-Type. Use application/json or multipart/form-data.",
         )
 
+    # Tenant check if creator already exists in database
+    existing_creator = db.get(Creator, creator_id)
+    if existing_creator and not current_user.can_access_creator(existing_creator.id, existing_creator.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to inspect this creator's data.",
+        )
+
     result = run_data_readiness(
         {"creator_id": creator_id, "source": source, "raw_data": records},
         quality_threshold=threshold,
@@ -185,10 +244,12 @@ async def check_data_readiness(request: Request):
 async def ingest_data(
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Runs full pipeline: schema mapping -> readiness validation -> DB persistence -> IngestionLog.
     Accepts either a JSON body or a multipart file upload (CSV, TSV, or JSON).
+    Enforces authorization, input bounds, and tenant isolation.
     """
     content_type = request.headers.get("content-type", "")
 
@@ -200,10 +261,15 @@ async def ingest_data(
             threshold = payload.quality_threshold
             creator_id = payload.creator_id
             source = payload.source or "custom_payload"
-        except Exception as e:
+        except ValueError as val_err:
+            raise HTTPException(
+                status_code=HTTP_413 if "exceeding" in str(val_err) else status.HTTP_400_BAD_REQUEST,
+                detail=str(val_err),
+            )
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid JSON payload: {str(e)}",
+                detail="Invalid JSON payload.",
             )
     elif "multipart/form-data" in content_type:
         form = await request.form()
@@ -226,7 +292,6 @@ async def ingest_data(
         except (ValueError, TypeError):
             threshold = 0.5
 
-        # Detect source if not explicitly provided
         headers = list(records[0].keys()) if records else []
         detected = detect_source_platform(headers)
         source = form.get("source") or detected
@@ -236,12 +301,21 @@ async def ingest_data(
             detail="Unsupported Content-Type. Use application/json or multipart/form-data.",
         )
 
+    # Enforce tenant authorization: prevent ingesting into another tenant's creator
+    existing_creator = db.get(Creator, creator_id)
+    if existing_creator and not current_user.can_access_creator(existing_creator.id, existing_creator.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to ingest data for this creator.",
+        )
+
     result = run_ingestion(
         session_or_factory=db,
         creator_id=creator_id,
         source=source,
         raw_data=records,
         quality_threshold=threshold,
+        workspace_id=current_user.workspace_id,
     )
     if result.get("data_ready"):
         invalidate_analytics_cache(creator_id)
@@ -253,11 +327,20 @@ async def ingest_data(
 def ingest_pasted_data(
     payload: IngestPastePayload,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Parses and ingests raw tabular text copied directly from Google Sheets,
-    Excel, or Markdown tables.
+    Excel, or Markdown tables with authorization and size bounds.
     """
+    # Enforce tenant authorization
+    existing_creator = db.get(Creator, payload.creator_id)
+    if existing_creator and not current_user.can_access_creator(existing_creator.id, existing_creator.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to ingest data for this creator.",
+        )
+
     adapter = PasteAdapter()
     records = adapter.fetch(text=payload.text_data)
 
@@ -265,6 +348,12 @@ def ingest_pasted_data(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No valid records could be parsed from the pasted text.",
+        )
+
+    if len(records) > settings.MAX_INGEST_RECORDS:
+        raise HTTPException(
+            status_code=HTTP_413,
+            detail=f"Pasted dataset contains {len(records)} records, exceeding the limit of {settings.MAX_INGEST_RECORDS}.",
         )
 
     headers = list(records[0].keys())
@@ -277,6 +366,7 @@ def ingest_pasted_data(
         source=source,
         raw_data=records,
         quality_threshold=payload.quality_threshold,
+        workspace_id=current_user.workspace_id,
     )
     if result.get("data_ready"):
         invalidate_analytics_cache(payload.creator_id)

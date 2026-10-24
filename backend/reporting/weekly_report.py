@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/reporting/weekly_report.py
 
 Weekly Executive Growth Report Generator:
@@ -8,6 +8,7 @@ structured JSON, GitHub-flavored Markdown, and printable standalone HTML.
 """
 
 from __future__ import annotations
+import html
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
@@ -106,13 +107,44 @@ def generate_weekly_report(creator_id: str, db: Session) -> Dict[str, Any]:
 
     rendered_markdown = "\n".join(md_lines)
 
-    # Render Standalone Styled HTML
+    # Render Standalone Styled HTML with Strict XSS Escaping (SEC-05)
+    esc_creator_id = html.escape(str(creator_id))
+    esc_niche = html.escape(str(niche))
+    esc_best_window = html.escape(str(best_window))
+
+    priorities_html = "".join([f"<li>{html.escape(str(p))}</li>" for p in priorities[:3]])
+    format_alloc_html = " / ".join([f"{html.escape(str(k)).capitalize()}: {v}%" for k, v in format_alloc.items()])
+
+    scheduled_html_items = []
+    for item in scheduled_items:
+        day_str = html.escape(str(item.get("day", "")))
+        ctype_str = html.escape(str(item.get("content_type", "reel")))
+        time_str = html.escape(str(item.get("scheduled_time", "")))
+        target_str = html.escape(str(item.get("target_metric", "")))
+        theme_str = html.escape(str(item.get("theme", "")))
+        angle_str = html.escape(str(item.get("concept_angle", "")))
+        hook_str = html.escape(str(item.get("hook_preview", ""))) if item.get("hook_preview") else ""
+
+        item_card = f"""
+        <div class="schedule-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:16px; color:#38bdf8;">{day_str}</strong>
+                <span class="badge">{ctype_str}</span>
+            </div>
+            <div style="font-size:13px; color:#94a3b8; margin: 4px 0;">Time: {time_str} | Target: {target_str}</div>
+            <div style="margin-top:6px;"><strong>Theme:</strong> {theme_str} - {angle_str}</div>
+            {f'<div class="hook-quote">"{hook_str}"</div>' if hook_str else ''}
+        </div>"""
+        scheduled_html_items.append(item_card)
+
+    items_block = "".join(scheduled_html_items) if scheduled_html_items else "<p>No content plan currently scheduled.</p>"
+
     rendered_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Growth Briefing - {creator_id}</title>
+    <title>Weekly Growth Briefing - {esc_creator_id}</title>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; margin: 0; line-height: 1.6; }}
         .container {{ max-width: 860px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 36px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }}
@@ -130,7 +162,7 @@ def generate_weekly_report(creator_id: str, db: Session) -> Dict[str, Any]:
 <body>
     <div class="container">
         <h1>Weekly Executive Growth Briefing</h1>
-        <p><strong>Creator:</strong> {creator_id} &nbsp;|&nbsp; <strong>Niche:</strong> {niche} &nbsp;|&nbsp; <strong>Generated:</strong> {utcnow().strftime('%B %d, %Y')}</p>
+        <p><strong>Creator:</strong> {esc_creator_id} &nbsp;|&nbsp; <strong>Niche:</strong> {esc_niche} &nbsp;|&nbsp; <strong>Generated:</strong> {utcnow().strftime('%B %d, %Y')}</p>
         
         <h2>1. Key Metrics & Momentum</h2>
         <div class="grid">
@@ -148,29 +180,19 @@ def generate_weekly_report(creator_id: str, db: Session) -> Dict[str, Any]:
             </div>
             <div class="card">
                 <div class="metric-label">Optimal Window</div>
-                <div class="metric-val" style="font-size: 15px; margin-top: 8px;">{best_window}</div>
+                <div class="metric-val" style="font-size: 15px; margin-top: 8px;">{esc_best_window}</div>
             </div>
         </div>
 
         <h2>2. Format Allocation & Priorities</h2>
-        <p><strong>Format Allocation:</strong> {' / '.join([f'{k.capitalize()}: {v}%' for k, v in format_alloc.items()])}</p>
+        <p><strong>Format Allocation:</strong> {format_alloc_html}</p>
         <p><strong>Strategic Priorities:</strong></p>
         <ul>
-            {''.join([f'<li>{p}</li>' for p in priorities[:3]])}
+            {priorities_html}
         </ul>
 
         <h2>3. What to Post This Week</h2>
-        {''.join([f'''
-        <div class="schedule-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="font-size:16px; color:#38bdf8;">{item.get('day')}</strong>
-                <span class="badge">{item.get('content_type', 'reel')}</span>
-            </div>
-            <div style="font-size:13px; color:#94a3b8; margin: 4px 0;">Time: {item.get('scheduled_time')} | Target: {item.get('target_metric')}</div>
-            <div style="margin-top:6px;"><strong>Theme:</strong> {item.get('theme')} - {item.get('concept_angle')}</div>
-            {f'<div class="hook-quote">"{item.get("hook_preview")}"</div>' if item.get('hook_preview') else ''}
-        </div>
-        ''' for item in scheduled_items]) if scheduled_items else '<p>No content plan currently scheduled.</p>'}
+        {items_block}
     </div>
 </body>
 </html>"""

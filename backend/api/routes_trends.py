@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/api/routes_trends.py
 
 REST API Endpoints for Trend Sniffing:
@@ -16,6 +16,7 @@ from sqlalchemy import desc
 
 from backend.database.session import get_db
 from backend.database.models import TrendingSignal, utcnow
+from backend.security import get_current_user, User
 from backend.data.adapters.trend_sniffing_adapter import TrendSniffingAdapter, NICHE_SUBREDDITS
 
 router = APIRouter(prefix="/trends", tags=["Trends"])
@@ -64,6 +65,7 @@ def sniff_trends(
     limit: int = Query(5, ge=1, le=20),
     use_network: bool = Query(True, description="Fetch live public network feeds (falls back to radar if offline)"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Discovers rising topics, debates, and queries for a given niche.
@@ -94,8 +96,9 @@ def sniff_trends(
 def sniff_custom_trends(
     payload: CustomSniffRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Sniffs trends from custom user-specified subreddits and keywords."""
+    """Sniffs trends from custom user-specified subreddits and keywords with authentication."""
     adapter = TrendSniffingAdapter()
     results: List[Dict[str, Any]] = []
 
@@ -128,6 +131,7 @@ def sniff_custom_trends(
 def get_cached_trending_signals(
     niche: Optional[str] = Query(None, description="Optional filter by niche"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieves unexpired trending signals saved in PostgreSQL."""
     now = utcnow()
