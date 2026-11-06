@@ -275,7 +275,7 @@ export default function App() {
         creatorId={selectedCreator}
       />
 
-      {isFeedbackOpen && <FeedbackModal workflow={titles[activeView] || 'Overview'} onClose={() => setIsFeedbackOpen(false)} showToast={showToast} />}
+      {isFeedbackOpen && <FeedbackModal workflow={activeView} onClose={() => setIsFeedbackOpen(false)} showToast={showToast} />}
 
       {/* Toast Alert System */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />

@@ -7,7 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Machine-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Tests Passing](https://img.shields.io/badge/tests-97%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-103%20passed-brightgreen.svg)]()
 [![Security Hardened](https://img.shields.io/badge/security-hardened-success.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

@@ -191,3 +191,6 @@ def test_workspace_admin_and_parent_records_stay_tenant_scoped(client, db_sessio
     assert client.post("/content/plan", json={"creator_id": "scope_a", "strategy_id": "strategy_b"}, headers=headers).status_code == 404
     assert client.post("/content/generate", json={"creator_id": "scope_a", "plan_id": "plan_b"}, headers=headers).status_code == 404
     assert client.get("/content/plans/scope_a", headers=headers).status_code == 404
+    ux_dashboard = client.get("/ux/dashboard", headers=headers)
+    assert ux_dashboard.status_code == 200
+    assert ux_dashboard.json()["can_edit_rubric"] is False

@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { X, MessageSquareText } from 'lucide-react';
 import { api } from '../../api/client';
 
+const workflowLabels = {
+  overview: 'Overview Dashboard', creators: 'Creator Profile', import: 'Import Data',
+  analytics: 'Analytics', virality: 'Content Scoring', simulation: 'Growth Planning',
+  strategy: 'Growth Strategy', calendar: 'Content Calendar', drafts: 'Draft Studio',
+  experiments: 'Experiments', trends: 'Trend Radar', approvals: 'Review Queue',
+};
+
 export default function FeedbackModal({ onClose, showToast, workflow }) {
+  const workflowLabel = workflowLabels[workflow] || workflowLabels.overview;
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,7 +33,7 @@ export default function FeedbackModal({ onClose, showToast, workflow }) {
         <button type="button" onClick={onClose} aria-label="Close feedback" className="p-2 text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
       </div>
       <label className="block text-sm font-semibold">Workflow
-        <select value={workflow} disabled className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"><option>{workflow}</option></select>
+        <select value={workflow} disabled className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"><option value={workflow}>{workflowLabel}</option></select>
       </label>
       <label className="block text-sm font-semibold">Overall rating
         <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">

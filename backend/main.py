@@ -44,20 +44,69 @@ app = FastAPI(
 )
 
 
-@app.middleware("http")
-async def enforce_request_size_and_cookie_csrf(request, call_next):
-    content_length = request.headers.get("content-length")
-    if content_length and content_length.isdigit() and int(content_length) > settings.MAX_REQUEST_SIZE_BYTES:
-        return JSONResponse(status_code=413, content={"detail": "Request body is too large."})
-    unsafe = request.method in {"POST", "PUT", "PATCH", "DELETE"}
-    cookie_auth = request.cookies.get("instamap_session") and not (
-        request.headers.get("x-api-key") or request.headers.get("authorization")
-    )
-    if unsafe and cookie_auth:
-        origin = request.headers.get("origin")
-        if not origin or origin.rstrip("/") not in {item.rstrip("/") for item in settings.cors_origins_list}:
-            return JSONResponse(status_code=403, content={"detail": "Untrusted request origin."})
-    return await call_next(request)
+class RequestSecurityMiddleware:
+    """Apply CSRF checks and cap both declared and streamed request bodies."""
+
+    def __init__(self, app, max_body_bytes: int, trusted_origins: list[str]):
+        self.app = app
+        self.max_body_bytes = max_body_bytes
+        self.trusted_origins = {origin.rstrip("/") for origin in trusted_origins}
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        headers = {key.lower(): value for key, value in scope.get("headers", [])}
+        content_length = headers.get(b"content-length", b"")
+        if content_length.isdigit() and int(content_length) > self.max_body_bytes:
+            await JSONResponse(status_code=413, content={"detail": "Request body is too large."})(scope, receive, send)
+            return
+
+        unsafe = scope.get("method") in {"POST", "PUT", "PATCH", "DELETE"}
+        cookie_auth = b"instamap_session=" in headers.get(b"cookie", b"") and not (
+            headers.get(b"x-api-key") or headers.get(b"authorization")
+        )
+        origin = headers.get(b"origin", b"").decode("latin-1").rstrip("/")
+        if unsafe and cookie_auth and (not origin or origin not in self.trusted_origins):
+            await JSONResponse(status_code=403, content={"detail": "Untrusted request origin."})(scope, receive, send)
+            return
+
+        consumed = 0
+
+        async def limited_receive():
+            nonlocal consumed
+            message = await receive()
+            if message["type"] == "http.request":
+                consumed += len(message.get("body", b""))
+                if consumed > self.max_body_bytes:
+                    raise RequestBodyTooLarge()
+            return message
+
+        response_started = False
+
+        async def track_send(message):
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, limited_receive, track_send)
+        except RequestBodyTooLarge:
+            if not response_started:
+                await JSONResponse(status_code=413, content={"detail": "Request body is too large."})(scope, receive, send)
+
+
+class RequestBodyTooLarge(Exception):
+    pass
+
+
+app.add_middleware(
+    RequestSecurityMiddleware,
+    max_body_bytes=settings.MAX_REQUEST_SIZE_BYTES,
+    trusted_origins=settings.cors_origins_list,
+)
 
 # CORS middleware with explicit trusted origins (SEC-03)
 app.add_middleware(
