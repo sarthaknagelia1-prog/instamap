@@ -362,8 +362,8 @@ def list_content_drafts(
         verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter_by(creator_id=creator_id)
     else:
-        # Scope drafts to creators in the user's workspace unless admin
-        if current_user.role != "admin":
+        # Scope drafts to creators in the user's workspace unless system admin
+        if current_user.role != "system_admin":
             from sqlalchemy import select
             workspace_creators = select(Creator.id).filter(Creator.workspace_id == current_user.workspace_id)
             query = query.filter(ContentDraft.creator_id.in_(workspace_creators))

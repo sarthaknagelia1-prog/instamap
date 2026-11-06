@@ -63,6 +63,6 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = _override_get_db
-    with TestClient(app) as test_client:
+    with TestClient(app, headers={"Origin": "http://localhost:5173"}) as test_client:
         yield test_client
     app.dependency_overrides.clear()

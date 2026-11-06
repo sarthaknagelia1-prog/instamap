@@ -13,7 +13,7 @@ from backend.data.adapters.meta_adapter import MetaAdapter
 from backend.database.session import SessionLocal
 from backend.database.models import Creator, Post
 
-client = TestClient(app)
+client = TestClient(app, headers={"Origin": "http://localhost:5173"})
 
 
 def test_parse_meta_business_suite_csv():

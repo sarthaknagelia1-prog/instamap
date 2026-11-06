@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from backend.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers={"Origin": "http://localhost:5173"})
 
 
 def test_login_with_valid_admin_key():

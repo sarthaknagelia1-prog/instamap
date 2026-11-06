@@ -13,7 +13,7 @@ from backend.analytics.simulation import GrowthSimulator
 from backend.database.session import SessionLocal
 from backend.database.models import Creator, Post
 
-client = TestClient(app)
+client = TestClient(app, headers={"Origin": "http://localhost:5173"})
 
 
 def test_growth_simulator_monte_carlo():

@@ -181,7 +181,7 @@ def list_experiments(
         verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter_by(creator_id=creator_id)
     else:
-        if current_user.role != "admin":
+        if current_user.role != "system_admin":
             workspace_creators = db.query(Creator.id).filter(Creator.workspace_id == current_user.workspace_id).subquery()
             query = query.filter(Experiment.creator_id.in_(workspace_creators))
 
