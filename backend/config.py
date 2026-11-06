@@ -29,9 +29,10 @@ class Settings:
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
 
     # Server Settings
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    # Passwordless development sessions must remain local to the machine by default.
+    HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("PORT", "8000"))
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
 
     # Security & Access Control Settings
     # In development/test default to False unless set to True; in production fails closed.
@@ -48,10 +49,13 @@ class Settings:
     MAX_UPLOAD_SIZE_BYTES: int = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(10 * 1024 * 1024)))  # 10MB
     MAX_INGEST_RECORDS: int = int(os.getenv("MAX_INGEST_RECORDS", "5000"))
     MAX_PASTE_SIZE_BYTES: int = int(os.getenv("MAX_PASTE_SIZE_BYTES", str(5 * 1024 * 1024)))   # 5MB
+    MAX_REQUEST_SIZE_BYTES: int = int(os.getenv("MAX_REQUEST_SIZE_BYTES", str(20 * 1024 * 1024)))
     ORCHESTRATOR_TIMEOUT_SECONDS: int = int(os.getenv("ORCHESTRATOR_TIMEOUT_SECONDS", "60"))
+    LLM_TIMEOUT_SECONDS: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 
     # Configured API keys mapping key -> user metadata JSON/dict
     API_KEYS_RAW: str = os.getenv("API_KEYS", "")
+    SESSION_COOKIE_SECURE: bool = os.getenv("SESSION_COOKIE_SECURE", "").lower() in ("true", "1", "yes")
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -62,6 +66,10 @@ class Settings:
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT.lower() == "production"
+
+    @property
+    def is_development(self) -> bool:
+        return self.ENVIRONMENT.lower() == "development"
 
 
 

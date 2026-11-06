@@ -6,11 +6,15 @@ Provides centralized principal representation and tenant context.
 """
 
 from __future__ import annotations
+import hashlib
 import json
-import os
+import secrets
 from dataclasses import dataclass, field
+from datetime import timedelta, timezone
 from typing import Dict, List, Optional
+from sqlalchemy.orm import Session
 from backend.config import settings
+from backend.database.models import BrowserSession, utcnow
 
 
 @dataclass
@@ -24,10 +28,12 @@ class User:
 
     def can_access_creator(self, creator_id: str, creator_workspace_id: Optional[str] = None) -> bool:
         """Determines if the user has authorization for a given creator."""
-        if self.role == "admin":
+        if self.role == "system_admin":
             return True
         if creator_workspace_id and creator_workspace_id != self.workspace_id:
             return False
+        if self.role == "admin":
+            return True
         if self.allowed_creators and creator_id not in self.allowed_creators:
             return False
         return True
@@ -37,7 +43,7 @@ class User:
 DEV_USER = User(
     user_id="dev-user",
     workspace_id=settings.DEFAULT_WORKSPACE_ID,
-    role="admin",
+    role="system_admin",
     allowed_creators=[],
     is_authenticated=False,
 )
@@ -47,7 +53,7 @@ DEFAULT_KEY_REGISTRY: Dict[str, Dict] = {
     "test-admin-key": {
         "user_id": "admin-1",
         "workspace_id": "system-admin",
-        "role": "admin",
+        "role": "system_admin",
         "allowed_creators": [],
     },
     "key-tenant-alpha": {
@@ -67,7 +73,7 @@ DEFAULT_KEY_REGISTRY: Dict[str, Dict] = {
 
 def get_configured_key_registry() -> Dict[str, Dict]:
     """Combines built-in keys with any configured via API_KEYS environment variable."""
-    registry = dict(DEFAULT_KEY_REGISTRY)
+    registry = dict(DEFAULT_KEY_REGISTRY) if settings.is_development else {}
     raw = settings.API_KEYS_RAW.strip()
     if raw:
         try:
@@ -107,3 +113,55 @@ def authenticate_token(token: str) -> Optional[User]:
         allowed_creators=data.get("allowed_creators", []),
         is_authenticated=True,
     )
+
+
+def _session_digest(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_browser_session(user: User, db: Session) -> str:
+    token = secrets.token_urlsafe(32)
+    db.add(BrowserSession(
+        id=_session_digest(token), user_id=user.user_id, workspace_id=user.workspace_id,
+        role=user.role, allowed_creators=user.allowed_creators,
+        expires_at=utcnow() + timedelta(hours=12),
+    ))
+    db.commit()
+    return token
+
+
+def authenticate_browser_session(token: Optional[str], db: Session) -> Optional[User]:
+    if not token:
+        return None
+    session = db.get(BrowserSession, _session_digest(token))
+    if not session:
+        return None
+    expiry = session.expires_at
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    if expiry <= utcnow():
+        return None
+    user = User(
+        user_id=session.user_id, workspace_id=session.workspace_id, role=session.role,
+        allowed_creators=session.allowed_creators or [], is_authenticated=True,
+    )
+    if not settings.is_development:
+        # Sessions inherit the current authorization record, so key removal or
+        # a role/workspace change takes effect after configuration reload.
+        if not any(
+            entry.get("user_id") == user.user_id
+            and entry.get("workspace_id", settings.DEFAULT_WORKSPACE_ID) == user.workspace_id
+            and entry.get("role", "member") == user.role
+            and (entry.get("allowed_creators") or []) == user.allowed_creators
+            for entry in get_configured_key_registry().values()
+        ):
+            return None
+    return user
+
+
+def revoke_browser_session(token: Optional[str], db: Session) -> None:
+    if token:
+        session = db.get(BrowserSession, _session_digest(token))
+        if session:
+            db.delete(session)
+            db.commit()

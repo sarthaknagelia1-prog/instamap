@@ -413,9 +413,11 @@ def ingest_from_meta_account(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Meta Graph API request failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Meta Graph API error: {str(e)}",
+            detail="Meta Graph API request failed. Check the token and permissions.",
         )
 
     if not records:

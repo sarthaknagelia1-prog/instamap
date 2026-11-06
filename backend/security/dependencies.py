@@ -13,19 +13,20 @@ from sqlalchemy.orm import Session
 from backend.config import settings
 from backend.database.models import Creator
 from backend.database.session import get_db
-from backend.security.auth import DEV_USER, User, authenticate_token
+from backend.security.auth import DEV_USER, User, authenticate_browser_session, authenticate_token
 
 
 def get_current_user(
     request: Request,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
 ) -> User:
     """
     Extracts and verifies authentication credentials.
     Supports either 'X-API-Key: <key>' or 'Authorization: Bearer <key>'.
-    In production or when REQUIRE_AUTH=True, rejects requests without valid credentials.
-    In local dev when REQUIRE_AUTH=False, falls back to DEV_USER.
+    Outside development or when REQUIRE_AUTH=True, rejects requests without valid credentials.
+    In development when REQUIRE_AUTH=False, falls back to DEV_USER.
     """
     token = x_api_key or authorization
 
@@ -39,8 +40,12 @@ def get_current_user(
             )
         return user
 
+    session_user = authenticate_browser_session(request.cookies.get("instamap_session"), db)
+    if session_user:
+        return session_user
+
     # No credentials provided
-    if settings.REQUIRE_AUTH or settings.is_production:
+    if settings.REQUIRE_AUTH or not settings.is_development:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication credentials were not provided.",
@@ -79,9 +84,15 @@ def require_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Enforces administrator role."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "system_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrative privileges required.",
         )
+    return current_user
+
+
+def require_system_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "system_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="System administrator privileges required.")
     return current_user

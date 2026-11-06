@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from sqlalchemy import update
 from sqlalchemy import desc
 
 from backend.database.session import get_db
@@ -140,7 +141,7 @@ def list_approvals(
         verify_creator_access(creator_id, db=db, current_user=current_user)
         query = query.filter(ApprovalItem.creator_id == creator_id)
     else:
-        if current_user.role != "admin":
+        if current_user.role != "system_admin":
             from sqlalchemy import select
             workspace_creators = select(Creator.id).filter(Creator.workspace_id == current_user.workspace_id)
             query = query.filter(ApprovalItem.creator_id.in_(workspace_creators))
@@ -250,6 +251,14 @@ def submit_approval_decision(
         )
 
     now = utcnow()
+    claim = db.execute(
+        update(ApprovalItem)
+        .where(ApprovalItem.id == approval_id, ApprovalItem.status == "pending")
+        .values(status=decision, reviewed_at=now)
+    )
+    if claim.rowcount != 1:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approval item has already been decided.")
     record.status = decision
     record.reviewed_at = now
     record.reviewer_decision = {

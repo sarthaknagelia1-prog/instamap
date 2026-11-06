@@ -7,16 +7,7 @@
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:8000');
 
 function getAuthHeaders() {
-  const headers = {};
-  const token = typeof window !== 'undefined'
-    ? (localStorage.getItem('instamap_token') || localStorage.getItem('instamap_api_key') || import.meta.env?.VITE_API_KEY)
-    : null;
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    headers['X-API-Key'] = token;
-  }
-  return headers;
+  return {};
 }
 
 async function handleResponse(res) {
@@ -49,6 +40,7 @@ async function get(path, params = {}) {
   const res = await fetch(url.toString(), {
     method: 'GET',
     headers: { 'Accept': 'application/json', ...getAuthHeaders() },
+    credentials: 'include',
   });
   return handleResponse(res);
 }
@@ -58,6 +50,7 @@ async function post(path, body, isFormData = false) {
   const options = {
     method: 'POST',
     headers: { 'Accept': 'application/json', ...getAuthHeaders() },
+    credentials: 'include',
   };
   if (isFormData) {
     options.body = body;
@@ -74,6 +67,7 @@ async function patch(path, body) {
   const res = await fetch(url.toString(), {
     method: 'PATCH',
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...getAuthHeaders() },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
   return handleResponse(res);
@@ -84,6 +78,9 @@ export const api = {
   login: (payload) => post('/auth/login', payload),
   logout: () => post('/auth/logout', {}),
   getMe: () => get('/auth/me'),
+  submitUxFeedback: (payload) => post('/ux/feedback', payload),
+  getUxDashboard: () => get('/ux/dashboard'),
+  saveUxRubric: (payload) => post('/ux/rubric', payload),
 
   // System Health
   getHealth: () => get('/health'),

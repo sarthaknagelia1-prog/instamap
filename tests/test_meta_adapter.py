@@ -13,7 +13,7 @@ from backend.data.adapters.meta_adapter import MetaAdapter
 from backend.database.session import SessionLocal
 from backend.database.models import Creator, Post
 
-client = TestClient(app)
+client = TestClient(app, headers={"Origin": "http://localhost:5173"})
 
 
 def test_parse_meta_business_suite_csv():
@@ -98,6 +98,9 @@ def test_fetch_account_posts_with_mock(mock_get):
 
     adapter = MetaAdapter(access_token="fake_token_123")
     posts = adapter.fetch_account_posts(limit=10)
+
+    assert all(call.kwargs.get("headers", {}).get("Authorization") == "Bearer fake_token_123" for call in mock_get.call_args_list)
+    assert all("access_token" not in call.kwargs.get("params", {}) for call in mock_get.call_args_list)
 
     assert len(posts) == 1
     p = posts[0]

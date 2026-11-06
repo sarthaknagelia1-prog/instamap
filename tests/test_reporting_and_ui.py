@@ -217,3 +217,6 @@ def test_dashboard_ui_routes(client):
     resp_dash = client.get("/dashboard")
     assert resp_dash.status_code == 200
     assert "Creator Command Center" in resp_dash.text
+
+    assert client.get("/legacy").status_code == 410
+    assert client.get("/static/index.html").status_code == 404

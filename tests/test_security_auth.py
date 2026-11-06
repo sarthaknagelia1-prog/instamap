@@ -8,7 +8,7 @@ Tests fail-closed behavior when authentication is required and cross-workspace a
 from __future__ import annotations
 import pytest
 from backend.config import settings
-from backend.database.models import Creator, Post, ApprovalItem, ContentDraft, utcnow
+from backend.database.models import Creator, Post, ApprovalItem, ContentDraft, Strategy, ContentPlan, utcnow
 
 
 def test_unauthenticated_requests_rejected_when_auth_required(client, monkeypatch):
@@ -112,7 +112,6 @@ def test_cross_tenant_isolation(client, db_session, monkeypatch):
     # 2. User Beta CANNOT read Creator Alpha (403 Forbidden)
     resp = client.get("/creators/creator_alpha", headers=headers_beta)
     assert resp.status_code == 403
-
     # 3. User Beta CANNOT read Creator Alpha's posts
     resp = client.get("/creators/creator_alpha/posts", headers=headers_beta)
     assert resp.status_code == 403
@@ -173,3 +172,25 @@ def test_cross_tenant_isolation(client, db_session, monkeypatch):
         headers=headers_beta,
     )
     assert resp.status_code == 403
+
+
+def test_workspace_admin_and_parent_records_stay_tenant_scoped(client, db_session, monkeypatch):
+    monkeypatch.setattr(settings, "REQUIRE_AUTH", True)
+    creator_a = Creator(id="scope_a", workspace_id="ws-alpha", niche="Food")
+    creator_b = Creator(id="scope_b", workspace_id="ws-beta", niche="Travel")
+    strategy_b = Strategy(id="strategy_b", creator_id="scope_b", primary_content_type="reel")
+    plan_b = ContentPlan(id="plan_b", creator_id="scope_b", strategy_id="strategy_b", scheduled_items=[])
+    db_session.add_all([creator_a, creator_b, strategy_b, plan_b])
+    db_session.commit()
+
+    monkeypatch.setattr(settings, "API_KEYS_RAW", '{"workspace-admin":{"user_id":"admin-a","workspace_id":"ws-alpha","role":"admin"}}')
+    headers = {"X-API-Key": "workspace-admin"}
+    listed = client.get("/creators", headers=headers)
+    assert listed.status_code == 200
+    assert [creator["id"] for creator in listed.json()] == ["scope_a"]
+    assert client.post("/content/plan", json={"creator_id": "scope_a", "strategy_id": "strategy_b"}, headers=headers).status_code == 404
+    assert client.post("/content/generate", json={"creator_id": "scope_a", "plan_id": "plan_b"}, headers=headers).status_code == 404
+    assert client.get("/content/plans/scope_a", headers=headers).status_code == 404
+    ux_dashboard = client.get("/ux/dashboard", headers=headers)
+    assert ux_dashboard.status_code == 200
+    assert ux_dashboard.json()["can_edit_rubric"] is False

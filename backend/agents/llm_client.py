@@ -41,6 +41,7 @@ class LLMClient:
         client = OpenAI(
             api_key=key,
             base_url="https://api.groq.com/openai/v1",
+            timeout=settings.LLM_TIMEOUT_SECONDS,
         )
         model = self.model or settings.GROQ_MODEL or "openai/gpt-oss-120b"
 
@@ -62,7 +63,7 @@ class LLMClient:
 
         import anthropic
 
-        client = anthropic.Anthropic(api_key=key)
+        client = anthropic.Anthropic(api_key=key, timeout=settings.LLM_TIMEOUT_SECONDS)
         model = self.model or settings.ANTHROPIC_MODEL or "claude-3-5-sonnet-20241022"
 
         response = client.messages.create(

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from backend.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers={"Origin": "http://localhost:5173"})
 
 
 def test_login_with_valid_admin_key():
@@ -21,9 +21,11 @@ def test_login_with_valid_admin_key():
     assert resp.status_code == 200
     data = resp.json()
     assert data["user_id"] == "admin-1"
-    assert data["role"] == "admin"
+    assert data["role"] == "system_admin"
     assert data["workspace_id"] == "system-admin"
-    assert data["access_token"] == "test-admin-key"
+    assert "access_token" not in data
+    assert resp.cookies.get("instamap_session")
+    assert "httponly" in resp.headers.get("set-cookie", "").lower()
 
 
 def test_login_with_tenant_key():
@@ -60,16 +62,16 @@ def test_login_demo_mode_ephemeral_token():
     data = resp.json()
     assert data["user_id"] == "creator_sarthak"
     assert data["workspace_id"] == "creator_studio"
-    assert data["access_token"].startswith("key-session-")
+    assert "access_token" not in data
+    assert resp.cookies.get("instamap_session")
+    assert client.get("/auth/me").json()["user_id"] == "creator_sarthak"
 
 
 def test_get_me_with_bearer_token():
     # Login first
     login_resp = client.post("/auth/login", json={"username": "user-alpha", "api_key": "key-tenant-alpha"})
-    token = login_resp.json()["access_token"]
-
-    headers = {"Authorization": f"Bearer {token}"}
-    me_resp = client.get("/auth/me", headers=headers)
+    assert login_resp.status_code == 200
+    me_resp = client.get("/auth/me")
     assert me_resp.status_code == 200
     data = me_resp.json()
     assert data["user_id"] == "user-alpha"
@@ -77,6 +79,9 @@ def test_get_me_with_bearer_token():
 
 
 def test_logout():
+    login = client.post("/auth/login", json={"username": "user-alpha", "api_key": "key-tenant-alpha"})
+    assert login.status_code == 200
     resp = client.post("/auth/logout")
     assert resp.status_code == 200
     assert resp.json()["status"] == "logged_out"
+    assert client.get("/auth/me").json()["is_authenticated"] is False
