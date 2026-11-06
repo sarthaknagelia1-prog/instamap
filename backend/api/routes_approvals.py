@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from sqlalchemy import update
 from sqlalchemy import desc
 
 from backend.database.session import get_db
@@ -250,6 +251,14 @@ def submit_approval_decision(
         )
 
     now = utcnow()
+    claim = db.execute(
+        update(ApprovalItem)
+        .where(ApprovalItem.id == approval_id, ApprovalItem.status == "pending")
+        .values(status=decision, reviewed_at=now)
+    )
+    if claim.rowcount != 1:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approval item has already been decided.")
     record.status = decision
     record.reviewed_at = now
     record.reviewer_decision = {

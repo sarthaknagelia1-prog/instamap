@@ -82,9 +82,9 @@ def list_creators(
 ):
     """Lists creators registered in the system scoped to the authenticated workspace."""
     query = db.query(Creator)
-    if current_user.role != "admin":
+    if current_user.role != "system_admin":
         query = query.filter(Creator.workspace_id == current_user.workspace_id)
-    if current_user.allowed_creators:
+    if current_user.allowed_creators and current_user.role not in ("admin", "system_admin"):
         query = query.filter(Creator.id.in_(current_user.allowed_creators))
 
     creators = query.all()

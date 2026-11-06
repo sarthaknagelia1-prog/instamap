@@ -194,6 +194,8 @@ def create_content_plan(
     strat = None
     if payload.strategy_id:
         strat = db.get(Strategy, payload.strategy_id)
+        if strat and strat.creator_id != creator.id:
+            raise HTTPException(status_code=404, detail="Strategy not found")
     if not strat:
         strat = (
             db.query(Strategy)
@@ -243,7 +245,7 @@ def get_latest_content_plan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Retrieves the latest 7-day content schedule for an authorized creator, or auto-generates one if posts exist."""
+    """Retrieves the latest 7-day content schedule for an authorized creator."""
     creator = verify_creator_access(creator_id, db=db, current_user=current_user)
 
     plan = (
@@ -253,31 +255,6 @@ def get_latest_content_plan(
         .first()
     )
     if not plan:
-        # If creator has posts, generate a plan automatically
-        posts = db.query(Post).filter_by(creator_id=creator_id).all()
-        if posts:
-            strat = (
-                db.query(Strategy)
-                .filter_by(creator_id=creator_id)
-                .order_by(Strategy.created_at.desc())
-                .first()
-            )
-            strat_dict = {
-                "strategy_id": strat.id,
-                "primary_content_type": strat.primary_content_type,
-                "core_pillars": strat.core_pillars,
-            } if strat else {}
-
-            post_dicts = [{"timestamp": p.timestamp.isoformat() if p.timestamp else None, "likes_count": p.likes_count, "comments_count": p.comments_count, "reach": p.reach} for p in posts]
-            best_window = find_best_posting_window(post_dicts)
-
-            return run_content_planning_agent(
-                creator_id=creator_id,
-                strategy=strat_dict,
-                best_posting_window=best_window,
-                week_number=1,
-                db=db,
-            )
         raise HTTPException(status_code=404, detail="No content plan found. Ingest posts or generate a plan.")
 
     return {
@@ -308,6 +285,8 @@ def generate_content_drafts(
     elif payload.plan_id:
         plan = db.get(ContentPlan, payload.plan_id)
         if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        if plan.creator_id != creator.id:
             raise HTTPException(status_code=404, detail="Plan not found")
         items_to_generate = plan.scheduled_items or []
     else:

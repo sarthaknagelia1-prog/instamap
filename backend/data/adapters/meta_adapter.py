@@ -59,12 +59,11 @@ class MetaAdapter(BaseAdapter):
         self.ig_user_id = ig_user_id
 
     def _get(self, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        params = {**params, "access_token": self.access_token}
         url = f"{GRAPH_API_BASE}/{path.lstrip('/')}"
-        response = requests.get(url, params=params, timeout=30)
+        response = requests.get(url, params=params, headers={"Authorization": f"Bearer {self.access_token}"}, timeout=30)
         if response.status_code == 429:
             time.sleep(3)
-            response = requests.get(url, params=params, timeout=30)
+            response = requests.get(url, params=params, headers={"Authorization": f"Bearer {self.access_token}"}, timeout=30)
         response.raise_for_status()
         return response.json()
 
@@ -82,7 +81,7 @@ class MetaAdapter(BaseAdapter):
                     self.ig_user_id = ig_acc["id"]
                     return self.ig_user_id
         except Exception as e:
-            logger.warning("Could not auto-discover IG account from /me/accounts: %s", e)
+            logger.warning("Could not auto-discover IG account from /me/accounts (%s)", type(e).__name__)
 
         try:
             # Fallback to direct /me?fields=id
@@ -91,7 +90,7 @@ class MetaAdapter(BaseAdapter):
                 self.ig_user_id = me_data["id"]
                 return self.ig_user_id
         except Exception as e:
-            logger.warning("Could not resolve /me: %s", e)
+            logger.warning("Could not resolve /me (%s)", type(e).__name__)
 
         return None
 
@@ -162,7 +161,7 @@ class MetaAdapter(BaseAdapter):
                         elif name == "shares":
                             record["shares_count"] = val
                 except Exception as e:
-                    logger.debug("Insights fetch failed for post %s: %s", post_id, e)
+                    logger.debug("Insights fetch failed for post %s (%s)", post_id, type(e).__name__)
 
             normalized.append(record)
 

@@ -225,3 +225,42 @@ class ApprovalItem(Base):
     reviewed_at = Column(DateTime, nullable=True)
 
     creator = relationship("Creator", back_populates="approval_items")
+
+
+class UXFeedback(Base):
+    __tablename__ = "ux_feedback"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False, index=True)
+    workspace_id = Column(String, nullable=False, index=True)
+    rating = Column(Integer, nullable=False)
+    workflow = Column(String(80), nullable=False)
+    comment = Column(String(1000), nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False, index=True)
+
+
+class UXRubricEvaluation(Base):
+    __tablename__ = "ux_rubric_evaluations"
+
+    id = Column(String, primary_key=True)
+    evaluator_id = Column(String, nullable=False)
+    task_completion = Column(Integer, nullable=False)
+    workflow_efficiency = Column(Integer, nullable=False)
+    learnability = Column(Integer, nullable=False)
+    accessibility = Column(Integer, nullable=False)
+    interface_clarity = Column(Integer, nullable=False)
+    notes = Column(String(1000), nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False, index=True)
+
+
+class BrowserSession(Base):
+    """Server-side browser session metadata; the raw cookie value is never stored."""
+    __tablename__ = "browser_sessions"
+
+    id = Column(String(64), primary_key=True)  # SHA-256 digest of the random cookie value
+    user_id = Column(String, nullable=False, index=True)
+    workspace_id = Column(String, nullable=False, index=True)
+    role = Column(String(32), nullable=False)
+    allowed_creators = Column(JSON, default=list, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)

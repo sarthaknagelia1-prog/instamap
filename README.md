@@ -7,7 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Machine-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Tests Passing](https://img.shields.io/badge/tests-87%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-97%20passed-brightgreen.svg)]()
 [![Security Hardened](https://img.shields.io/badge/security-hardened-success.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -202,24 +202,26 @@ Evaluates candidate posts across 5 deterministic analytical dimensions:
 
 ## Enterprise Security & Multitenancy
 
-The platform incorporates comprehensive security controls (audited and verified under `SECURITY_REMEDIATION_PLAN.md`):
+The platform applies workspace authorization and bounded ingestion. Browser sessions use an HttpOnly cookie; every non-development environment requires configured credentials and does not accept built-in demo keys or passwordless developer sign-in. The default development bind address is loopback.
 
 | Control ID | Vulnerability Category | Mitigation Applied |
 | :--- | :--- | :--- |
 | **SEC-01 / SEC-02** | Multitenancy & Authorization | Every creator is scoped to a `workspace_id`. All endpoints validate creator workspace ownership via `verify_creator_access` dependency. |
-| **SEC-03** | Authentication & RBAC | JWT Bearer token authentication via `get_current_user` with support for `creator`, `editor`, and `admin` roles, and safe development fallback. |
+| **SEC-03** | Authentication & RBAC | HttpOnly browser sessions plus API-key support; passwordless development login is restricted to non-production optional-auth mode. |
 | **SEC-04 / SEC-05** | Resource Exhaustion (DoS) | Strict file upload limit (`10 MB`), row count ceiling (`5,000` posts), and clipboard paste size limit (`5 MB`). |
-| **SEC-06** | Cross-Site Scripting (XSS) | User-supplied content, HTML reports, and chat messages strictly sanitized via `html.escape` and client-side HTML encoding. |
+| **SEC-06** | Cross-Site Scripting (XSS) | React renders advisor content as text. The legacy inline-script dashboard is retired to prevent unsafe HTML interpolation. |
 | **SEC-07** | Approval Queue Integrity | Server-enforced state transitions; conflicting re-decisions blocked with `409 Conflict`; reviewer audit logging recorded. |
 | **SEC-08** | Information Disclosure | Database connection failures and internal server errors in health checks sanitized to `"unavailable"` without leaking credentials. |
 | **SEC-09** | CORS Origin Security | Strict origin whitelisting in `config.py` avoiding wildcard `*` with credentials enabled. |
 | **SEC-10** | Continuous Security CI | Automated GitHub Actions workflow (`.github/workflows/security.yml`) executing all security test suites on push/PR. |
 
+Set `ENVIRONMENT=production` and provision long, unique `API_KEYS` entries for users. Use HTTPS so the session cookie's `Secure` flag is enabled in production and staging. The UX quality dashboard and rubric endpoint require the `admin` role; ordinary signed-in users can submit identified feedback.
+
 ---
 
 ## Database Schema (PostgreSQL `instaDB`)
 
-The system uses 9 core relational tables in PostgreSQL:
+The system uses relational tables in PostgreSQL, including `ux_feedback` and `ux_rubric_evaluations` for the internal experience-quality view:
 
 | Table | Primary Key | Key Columns / Foreign Keys | Description |
 | :--- | :--- | :--- | :--- |
@@ -410,11 +412,13 @@ DATABASE_URL=postgresql://postgres:YourPassword@localhost:5432/instaDB
 
 # App Configuration
 ENVIRONMENT=development
-API_BASE_URL=http://127.0.0.1:8000
+HOST=127.0.0.1
+REQUIRE_AUTH=false
 
 # Security & CORS
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000
-JWT_SECRET=your_super_secret_jwt_key_here
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000
+# Production only: JSON map of unique random API keys to user/workspace/role metadata
+API_KEYS={"replace-with-long-random-key":{"user_id":"owner","workspace_id":"default","role":"admin"}}
 
 # Optional: Groq LLM Inference (Falls back to deterministic algorithms when unset)
 GROQ_API_KEY=your_groq_api_key_here
@@ -424,7 +428,7 @@ GROQ_API_KEY=your_groq_api_key_here
 
 ## Automated Testing Suite
 
-The repository includes **87 comprehensive automated tests** validating data ingestion, Meta account adapters, mathematical models, Virality ML scoring, Monte Carlo growth simulations, LangGraph orchestration, statistical evaluation, security authorization, and approval workflows.
+The repository includes **97 automated tests** validating data ingestion, Meta account adapters, mathematical models, Virality ML scoring, Monte Carlo growth simulations, LangGraph orchestration, statistical evaluation, security authorization, approval workflows, and UX feedback scoring.
 
 To run the full test suite:
 ```bash

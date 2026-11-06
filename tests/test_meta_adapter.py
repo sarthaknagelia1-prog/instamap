@@ -99,6 +99,9 @@ def test_fetch_account_posts_with_mock(mock_get):
     adapter = MetaAdapter(access_token="fake_token_123")
     posts = adapter.fetch_account_posts(limit=10)
 
+    assert all(call.kwargs.get("headers", {}).get("Authorization") == "Bearer fake_token_123" for call in mock_get.call_args_list)
+    assert all("access_token" not in call.kwargs.get("params", {}) for call in mock_get.call_args_list)
+
     assert len(posts) == 1
     p = posts[0]
     assert p["post_id"] == "media_post_1"

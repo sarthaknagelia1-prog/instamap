@@ -18,16 +18,12 @@ import ExperimentsView from './components/views/ExperimentsView';
 import TrendRadarView from './components/views/TrendRadarView';
 import ApprovalsView from './components/views/ApprovalsView';
 import AdvisoryDrawer from './components/views/AdvisoryDrawer';
+import UXQualityView from './components/views/UXQualityView';
+import FeedbackModal from './components/views/FeedbackModal';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem('instamap_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [activeView, setActiveView] = useState('overview');
   const [creators, setCreators] = useState([]);
@@ -38,6 +34,7 @@ export default function App() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const showToast = (message, type = 'info', title = '') => {
     const id = Date.now() + Math.random();
@@ -63,9 +60,6 @@ export default function App() {
     try {
       await api.logout();
     } catch {}
-    localStorage.removeItem('instamap_token');
-    localStorage.removeItem('instamap_api_key');
-    localStorage.removeItem('instamap_user');
     setCurrentUser(null);
     showToast('Signed out of workspace.', 'info');
   };
@@ -87,6 +81,10 @@ export default function App() {
       .then((items) => setPendingApprovalsCount(items?.length || 0))
       .catch(() => setPendingApprovalsCount(0));
   };
+
+  useEffect(() => {
+    api.getMe().then((user) => setCurrentUser(user)).catch(() => setCurrentUser(null)).finally(() => setAuthLoading(false));
+  }, []);
 
   useEffect(() => {
     api.getHealth()
@@ -125,20 +123,23 @@ export default function App() {
 
   const titles = {
     overview: 'Overview Dashboard',
-    creators: 'Creator Profiles',
-    import: 'Data Import & Readiness',
-    analytics: 'Analytics & Posts',
-    virality: 'Virality ML Predictor',
-    simulation: 'Growth & Content Simulation',
+    creators: 'Creator Profile',
+    import: 'Import Data',
+    analytics: 'Analytics',
+    virality: 'Content Scoring',
+    simulation: 'Growth Planning',
     strategy: 'Growth Strategy',
     calendar: 'Content Calendar',
     drafts: 'Draft Studio',
-    experiments: 'Experiments Lab',
+    experiments: 'Experiments',
     trends: 'Trend Radar',
-    approvals: 'Approvals & History',
+    approvals: 'Review Queue',
+    ux: 'Experience Quality',
   };
 
   // If unauthenticated, present the Login & Workspace Switcher view
+  if (authLoading) return <div className="min-h-screen bg-slate-50 grid place-items-center text-sm text-slate-500">Restoring your workspace…</div>;
+
   if (!currentUser) {
     return (
       <>
@@ -158,6 +159,7 @@ export default function App() {
         setIsMobileOpen={setIsMobileOpen}
         pendingCount={pendingApprovalsCount}
         onOpenAdvisor={() => setIsAdvisorOpen(true)}
+        currentUser={currentUser}
       />
 
       {/* Main layout column */}
@@ -168,11 +170,12 @@ export default function App() {
           onSelectCreator={(cid) => {
             setSelectedCreator(cid);
             refreshPendingCount(cid);
-            showToast(`Switched workspace to ${cid}`, 'info');
+            showToast(`Selected creator account: ${cid}`, 'info');
           }}
           activeViewTitle={titles[activeView] || 'InstaMap'}
           onOpenAdvisor={() => setIsAdvisorOpen(true)}
           onOpenBriefing={() => window.open(api.getWeeklyReportHtmlUrl(selectedCreator), '_blank')}
+          onOpenFeedback={() => setIsFeedbackOpen(true)}
           onRunCycle={handleRunCycle}
           isCycleRunning={isCycleRunning}
           isOnline={isOnline}
@@ -260,6 +263,8 @@ export default function App() {
           {activeView === 'approvals' && (
             <ApprovalsView creatorId={selectedCreator} showToast={showToast} />
           )}
+
+          {activeView === 'ux' && <UXQualityView showToast={showToast} />}
         </main>
       </div>
 
@@ -269,6 +274,8 @@ export default function App() {
         onClose={() => setIsAdvisorOpen(false)}
         creatorId={selectedCreator}
       />
+
+      {isFeedbackOpen && <FeedbackModal workflow={titles[activeView] || 'Overview'} onClose={() => setIsFeedbackOpen(false)} showToast={showToast} />}
 
       {/* Toast Alert System */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />

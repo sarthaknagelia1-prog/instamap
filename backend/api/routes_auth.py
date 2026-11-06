@@ -2,24 +2,20 @@
 backend/api/routes_auth.py
 
 Authentication and session endpoints:
-- POST /auth/login: Authenticates credentials and returns a Bearer token + user context.
+- POST /auth/login: Exchanges credentials for an HttpOnly browser session + user context.
 - GET /auth/me: Returns current authenticated user and workspace tenancy details.
 """
 
 from __future__ import annotations
-import secrets
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.security import (
-    User,
-    get_current_user,
-    authenticate_token,
-    DEV_USER,
-)
-from backend.security.auth import get_configured_key_registry
+from backend.security import User, get_current_user, authenticate_token
+from backend.security.auth import create_browser_session, revoke_browser_session
+from backend.database.session import get_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -31,7 +27,6 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    access_token: str
     token_type: str = "bearer"
     user_id: str
     workspace_id: str
@@ -40,60 +35,48 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest):
+def login(payload: LoginRequest, response: Response, db: Session = Depends(get_db)):
     """
-    Authenticates a user against the key registry or grants a developer/creator session.
-    Returns an access token and tenant identity.
+    Authenticates an API key or grants a local development session.
+    Browser sessions are returned only as HttpOnly cookies.
     """
-    registry = get_configured_key_registry()
-
-    # 1. Direct API Key check if provided
+    user = None
+    # Credentials are exchanged for a server-side session; the browser receives only an HttpOnly cookie.
     if payload.api_key and payload.api_key.strip():
         user = authenticate_token(payload.api_key.strip())
-        if user:
-            return {
-                "access_token": payload.api_key.strip(),
-                "token_type": "bearer",
-                "user_id": user.user_id,
-                "workspace_id": user.workspace_id,
-                "role": user.role,
-                "allowed_creators": user.allowed_creators,
-            }
-        else:
+        if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key or access token.",
             )
 
-    # 2. Check username against registry user_ids
-    for key, data in registry.items():
-        if data.get("user_id") == payload.username.strip():
-            return {
-                "access_token": key,
-                "token_type": "bearer",
-                "user_id": data["user_id"],
-                "workspace_id": data.get("workspace_id", payload.workspace_id or "default"),
-                "role": data.get("role", "member"),
-                "allowed_creators": data.get("allowed_creators", []),
-            }
+    else:
+        # Passwordless developer entry is explicitly limited to non-production optional-auth mode.
+        if not settings.is_development or settings.REQUIRE_AUTH:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="An API key is required.")
+        if not payload.username.strip():
+            raise HTTPException(status_code=422, detail="Username is required.")
+        user = User(
+            user_id=payload.username.strip(),
+            workspace_id=(payload.workspace_id or settings.DEFAULT_WORKSPACE_ID).strip(),
+            # This admin shortcut is only reachable on the loopback-only local dev server.
+            role="system_admin",
+            allowed_creators=[],
+        )
 
-    # 3. Development / Demo mode session generation
-    generated_token = f"key-session-{secrets.token_hex(8)}"
-    # Register ephemeral session key for the duration of the server process
-    registry[generated_token] = {
-        "user_id": payload.username.strip(),
-        "workspace_id": payload.workspace_id.strip() if payload.workspace_id else "default",
-        "role": "admin" if "admin" in payload.username.lower() else "member",
-        "allowed_creators": [],
-    }
+    session_id = create_browser_session(user, db)
+    response.set_cookie(
+        "instamap_session", session_id, httponly=True,
+        secure=settings.SESSION_COOKIE_SECURE or not settings.is_development,
+        samesite="lax", path="/", max_age=60 * 60 * 12,
+    )
 
     return {
-        "access_token": generated_token,
         "token_type": "bearer",
-        "user_id": payload.username.strip(),
-        "workspace_id": payload.workspace_id.strip() if payload.workspace_id else "default",
-        "role": "admin" if "admin" in payload.username.lower() else "member",
-        "allowed_creators": [],
+        "user_id": user.user_id,
+        "workspace_id": user.workspace_id,
+        "role": user.role,
+        "allowed_creators": user.allowed_creators,
     }
 
 
@@ -110,7 +93,14 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(current_user: User = Depends(get_current_user)):
+def logout(
+    request: Request,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Logs out the active user and clears session."""
+    revoke_browser_session(request.cookies.get("instamap_session"), db)
+    response.delete_cookie("instamap_session", path="/", httponly=True, samesite="lax")
     return {"status": "logged_out", "user_id": current_user.user_id}
 

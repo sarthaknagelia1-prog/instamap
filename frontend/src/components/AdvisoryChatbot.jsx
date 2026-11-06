@@ -49,26 +49,6 @@ export default function AdvisoryChatbot({ creatorId, metrics, bestWindow }) {
     }
   };
 
-  const escapeHtml = (unsafe) => {
-    return (unsafe || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
-
-  const renderMarkdown = (text) => {
-    const safe = escapeHtml(text);
-    return safe
-      .replace(/### (.*?)\n/g, '<h4 class="text-sky-400 font-bold text-sm my-2">$1</h4>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="text-slate-200 italic">$1</em>')
-      .replace(/`([^`]+)`/g, '<code class="bg-[#1e293b] text-sky-400 px-1.5 py-0.5 rounded font-mono text-xs">$1</code>')
-      .replace(/^> (.*?)$/gm, '<blockquote class="border-l-2 border-pink-500 pl-3 my-2 text-slate-300 italic">$1</blockquote>')
-      .replace(/\n/g, '<br />');
-  };
-
   return (
     <div className="bg-[#111827] border border-[#1f293d] rounded-xl flex flex-col h-[600px] overflow-hidden">
       {/* Header */}
@@ -113,8 +93,7 @@ export default function AdvisoryChatbot({ creatorId, metrics, bestWindow }) {
                 ? 'ml-auto bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-md shadow-sky-600/20'
                 : 'mr-auto bg-[#090d16] border border-[#1f293d] text-slate-300 border-l-4 border-l-sky-400'
             }`}
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
-          />
+          >{m.content}</div>
         ))}
         {isLoading && (
           <div className="mr-auto bg-[#090d16] border border-[#1f293d] rounded-xl p-4 text-xs text-slate-400 flex items-center gap-2">

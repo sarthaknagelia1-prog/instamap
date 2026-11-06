@@ -15,23 +15,34 @@ import {
   ExternalLink,
   ChevronRight,
   Activity,
-  Zap
+  Zap,
+  Gauge,
+  UserCog
 } from 'lucide-react';
 
-export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIsMobileOpen, pendingCount = 0, onOpenAdvisor }) {
-  const navItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'creators', label: 'Creators', icon: Users },
-    { id: 'import', label: 'Data Import & Readiness', icon: UploadCloud },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'virality', label: 'Virality ML Predictor', icon: Sparkles },
-    { id: 'simulation', label: 'Simulation Studio', icon: Activity },
-    { id: 'strategy', label: 'Growth Strategy', icon: Compass },
-    { id: 'calendar', label: 'Content Calendar', icon: Calendar },
-    { id: 'drafts', label: 'Draft Studio', icon: PenTool },
-    { id: 'experiments', label: 'Experiments Lab', icon: FlaskConical },
-    { id: 'trends', label: 'Trend Radar', icon: Radio },
-    { id: 'approvals', label: 'Approvals & History', icon: ShieldCheck, badge: pendingCount > 0 ? pendingCount : null },
+export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIsMobileOpen, pendingCount = 0, onOpenAdvisor, currentUser }) {
+  const navGroups = [
+    { label: 'Workspace', items: [
+      { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+      { id: 'creators', label: 'Creator Profile', icon: Users },
+      { id: 'import', label: 'Import Data', icon: UploadCloud },
+    ] },
+    { label: 'Content', items: [
+      { id: 'calendar', label: 'Calendar', icon: Calendar },
+      { id: 'drafts', label: 'Draft Studio', icon: PenTool },
+      { id: 'approvals', label: 'Review Queue', icon: ShieldCheck, badge: pendingCount > 0 ? pendingCount : null },
+      { id: 'strategy', label: 'Growth Strategy', icon: Compass },
+    ] },
+    { label: 'Insights', items: [
+      { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'virality', label: 'Content Scoring', icon: Sparkles },
+      { id: 'simulation', label: 'Growth Planning', icon: Activity },
+      { id: 'experiments', label: 'Experiments', icon: FlaskConical },
+      { id: 'trends', label: 'Trend Radar', icon: Radio },
+    ] },
+    ...(['admin', 'system_admin'].includes(currentUser?.role) ? [{ label: 'Administration', items: [
+      { id: 'ux', label: 'Experience Quality', icon: Gauge },
+    ] }] : []),
   ];
 
   const handleNavClick = (id) => {
@@ -73,10 +84,9 @@ export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIs
 
         {/* Navigation list */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          <div className="px-3 pb-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Platform Menu
-          </div>
-          {navItems.map((item) => {
+          {navGroups.map((group) => <section key={group.label} className="mb-4">
+          <div className="px-3 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.label}</div>
+          {group.items.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
             return (
@@ -104,6 +114,7 @@ export default function Sidebar({ activeView, setActiveView, isMobileOpen, setIs
               </button>
             );
           })}
+          </section>)}
         </nav>
 
         {/* AI Advisory Drawer Card */}
